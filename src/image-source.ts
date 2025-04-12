@@ -1,10 +1,14 @@
-import { Viewport } from '.'
+import { RenderingSpec, Viewport } from './scale'
 
 export class ImageSource implements Viewport {
+  private _spec: RenderingSpec
   constructor(
     private _map: ImageBitmap | undefined,
     readonly meta: { name: string; size: number; type: string }
-  ) {}
+  ) {
+    //@ts-ignore
+    this._spec = undefined
+  }
   get bitmap() {
     return this._map!
   }
@@ -22,6 +26,35 @@ export class ImageSource implements Viewport {
   }
   get type(): string {
     return this.meta.type
+  }
+  get renderingSpec(): RenderingSpec {
+    return this._spec
+  }
+  setRenderingSpec(spec: RenderingSpec) {
+    this._spec = spec
+  }
+  setLocation(x: number, y: number) {
+    const { _spec } = this
+    if (!_spec) {
+      throw new Error('not initialized', { cause: 'NOT_INITIALIZED' })
+    }
+    _spec.view.x = x
+    _spec.view.y = y
+  }
+  draw(ctx: CanvasRenderingContext2D) {
+    const { bitmap, _spec: spec } = this
+    const { subject: s, view: v } = spec
+    ctx.drawImage(
+      bitmap,
+      s.x,
+      s.y,
+      s.width,
+      s.height,
+      v.x,
+      v.y,
+      v.width,
+      v.height
+    )
   }
   destroy(): void {
     if (this._map) {

@@ -1,4 +1,4 @@
-import { ScaleData, Viewport } from '.'
+import { RenderingSpec, Viewport } from '.'
 /**
  * scale subject to fit viewport
  * @param src subject to be rendered on viewport
@@ -8,7 +8,7 @@ import { ScaleData, Viewport } from '.'
 export const scaleByContain = (
   src: Viewport,
   viewport: Viewport
-): ScaleData => {
+): RenderingSpec => {
   const { width: subjectWidth, height: subjectHeight } = src
   const { width: viewWidth, height: viewHeight } = viewport
   const ratio = Math.min(viewWidth / subjectWidth, viewHeight / subjectHeight)

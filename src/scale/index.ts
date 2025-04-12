@@ -9,12 +9,12 @@ export type Viewport = {
 }
 export type ScaleMode = 'contain' | 'cover' | 'custom'
 export type Area = { x: number; y: number; width: number; height: number }
-export type ScaleData = {
+export type RenderingSpec = {
   subject: Area
   view: Area
   ratio: number
 }
-export type Scaler = (src: Viewport, view: Viewport) => ScaleData
+export type Scaler = (src: Viewport, view: Viewport) => RenderingSpec
 export const scalers: Record<ScaleMode, Scaler> = {
   contain: scaleByContain,
   cover: scaleByCover,
