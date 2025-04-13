@@ -10,6 +10,10 @@ describe('DomUtil', () => {
     root = document.createElement('div')
     document.body.appendChild(root)
   })
+  it('creation', () => {
+    const btn = dom.create<HTMLButtonElement>('button[data-move]', root)
+    expect(dom.findOne(root, '[data-move]')).toBe(btn)
+  })
   it('create element from the css selector', () => {
     const elem = dom.create('p#para.one.two')
     expect(elem).toBeDefined()
@@ -51,31 +55,102 @@ describe('DomUtil', () => {
     })
 
     it('null when no element is found', () => {
-      const result = dom.findOne<HTMLParagraphElement, undefined>(root, '#my-element')
+      const result = dom.findOne<HTMLParagraphElement, undefined>(
+        root,
+        '#my-element'
+      )
       expect(result).toBeNull()
     })
 
     it('supplied element when no element is found', () => {
-      const result = dom.findOne<HTMLParagraphElement>(root, '#my-element', () =>
-        document.createElement('p')
+      const result = dom.findOne<HTMLParagraphElement>(
+        root,
+        '#my-element',
+        () => document.createElement('p')
       )
       expect(result).toBeDefined()
       // expect(result.id).toBe('my-element')
     })
 
     it('appends supplied element when no element is found and supply is provided', () => {
-      dom.findOne<HTMLParagraphElement>(root, 'p', () => document.createElement('p'))
+      dom.findOne<HTMLParagraphElement>(root, 'p', () =>
+        document.createElement('p')
+      )
       expect(root.querySelector('p')).not.toBeNull()
     })
 
     it('an error for multiple elements', () => {
       dom.creates<HTMLParagraphElement>(root, 'p.one', 'p.one')
-      expect(() => dom.findOne<HTMLParagraphElement>(root, '.one')).toThrowError()
+      expect(() =>
+        dom.findOne<HTMLParagraphElement>(root, '.one')
+      ).toThrowError()
     })
     it('returns the element of type defined', () => {
       const elem = dom.create('#my-elem', root)
       const result = dom.findOne<HTMLDivElement>(root, '#my-elem')
       expect(result).toBe(elem)
     })
+  })
+})
+describe('Deep Clone', () => {
+  const dom = new DomUtil()
+  it('clone plain', () => {
+    expect(dom.deepClone(123)).toBe(123)
+    expect(dom.deepClone('one')).toBe('one')
+    expect(dom.deepClone(undefined)).toBe(undefined)
+    expect(dom.deepClone(null)).toBe(null)
+    const fn: Function = () => {}
+    expect(dom.deepClone(fn)).toBe(fn)
+  })
+  it('plain object', () => {
+    const src = { one: 1, two: 'TWO' }
+    const dst = dom.deepClone(src)
+    expect(dst).toEqual(src)
+    expect(dst).not.toBe(src)
+  })
+  it('nested object in object', () => {
+    const src = { one: 1, inner: { two: 'TWO' } }
+    const dst = dom.deepClone(src)
+    expect(dst).toEqual(src)
+    expect(dst).not.toBe(src)
+    expect(dst.inner).toEqual(src.inner)
+    expect(dst.inner).not.toBe(src.inner)
+  })
+  it('nested array in object', () => {
+    const src = { one: 1, arr: [2, 3, 'five'] }
+    const dst = dom.deepClone(src)
+    expect(dst).toEqual(src)
+    expect(dst).not.toBe(src)
+    expect(dst.arr).toEqual(src.arr)
+    expect(dst.arr).not.toBe(src.arr)
+  })
+  it('plain array', () => {
+    const src = [2, 3, 5, 'sevent']
+    const dst = dom.deepClone(src)
+    expect(dst).toEqual(src)
+    expect(dst).not.toBe(src)
+  })
+  it('nested object in array', () => {
+    const src = [{ one: 1 }, { two: 'TWO' }]
+    const dst = dom.deepClone(src)
+    expect(dst).toEqual(src)
+    expect(dst).not.toBe(src)
+    expect(dst[0]).toEqual(src[0])
+    expect(dst[0]).not.toBe(src[0])
+    expect(dst[1]).toEqual(src[1])
+    expect(dst[1]).not.toBe(src[1])
+  })
+  it('nested array in array', () => {
+    const src = [
+      [2, 3],
+      [5, 'sevent'],
+    ]
+    const dst = dom.deepClone(src)
+    expect(dst).toEqual(src)
+    expect(dst).not.toBe(src)
+    expect(dst[0]).toEqual(src[0])
+    expect(dst[0]).not.toBe(src[0])
+    expect(dst[1]).toEqual(src[1])
+    expect(dst[1]).not.toBe(src[1])
   })
 })

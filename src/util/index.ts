@@ -1,7 +1,46 @@
 import { CssSelector } from '..'
 import { parseCssSelector } from './css-selector'
+const PRIMITIVES = 'number,string,boolean'.split(',')
+const isPrimitive = (o: unknown): boolean => PRIMITIVES.includes(typeof o)
 
+const isFunction = (o: any): boolean => typeof o === 'function'
+
+const deepClone = <T = unknown>(src: T): T => {
+  if (
+    src === undefined ||
+    src === null ||
+    isPrimitive(src) ||
+    isFunction(src)
+  ) {
+    return src
+  }
+  if (Array.isArray(src)) {
+    return src.map(deepClone) as T
+  }
+  const dst = {} as T
+  Object.keys(src).forEach((key) => {
+    const prop = key as keyof T
+    const value = deepClone(src[prop])
+    dst[prop] = value
+  })
+  return dst
+}
 export class DomUtil {
+  isPrimitve(value: unknown) {
+    return isPrimitive(value)
+  }
+  isFunction(value: unknown) {
+    return isFunction(value)
+  }
+  /**
+   * copy all properties from src to dst recursively
+   * @param src
+   * @param dst
+   * @returns dst
+   */
+  deepClone<T>(src: T) {
+    return deepClone(src)
+  }
   /**
    * create multiple elements from the css selector syntax. If parentEl is given, the new elements will be appended to it.
    * @param selectors css selector syntax for elements
@@ -34,13 +73,47 @@ export class DomUtil {
     if (spec.class.length > 0) {
       elem.classList.add(...spec.class)
     }
+    const { data } = spec
+    if (data) {
+      Object.keys(data).forEach((key) => {
+        const prop = this.toCameCase(key)
+        elem.dataset[prop] = data[key]
+      })
+    }
     if (parentEl) {
       parentEl.appendChild(elem)
     }
     return elem
   }
+
   /**
-   * find an element, or supplied element or null
+   * set value in `dataset` of an element.
+   * @param el target element
+   * @param key dataset property name
+   * @param value dataset value
+   */
+  bindDataset(el: HTMLElement, key: string, value: string) {
+    const prop = this.toCameCase(key)
+    el.dataset[prop] = value
+  }
+  /**
+   * convert 'some-prop-name' to 'somePropName'
+   * @param text dashed string
+   * @returns camel-case string
+   */
+  toCameCase(text: string): string {
+    return text
+      .split('-')
+      .map((part, i) => {
+        if (i === 0) {
+          return part
+        }
+        return part[0].toUpperCase() + part.substring(1)
+      })
+      .join('')
+  }
+  /**
+   * find an element, supplied element or null
    * @param el - parent element
    * @param selector - css selector syntax
    * @param supply - used if no element is found
@@ -55,7 +128,7 @@ export class DomUtil {
     selector: string,
     supply?: () => T
   ): S extends undefined ? T | null : T {
-    const elems = this.finds(el, selector) // el.querySelectorAll(selector)
+    const elems = this.finds(el, selector)
     if (elems.length === 0) {
       const elem = supply
         ? supply()
