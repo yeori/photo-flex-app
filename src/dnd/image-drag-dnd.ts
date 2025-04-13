@@ -7,15 +7,15 @@ export class ImageDragger implements DragListener {
   constructor(readonly editor: PhotoFlex) {}
   before(): void {
     const { editor } = this
-    this._areas = editor.imageSources.map((img) =>
-      Object.assign({}, img.renderingSpec.view)
+    this._areas = editor.layers.map((layer) =>
+      Object.assign({}, layer.renderingSpec)
     )
   }
   dragging(e: DragEvent): void {
     const { editor } = this
     const { dx, dy } = e
-    editor.imageSources.forEach((img, index) => {
-      img.setLocation(this._areas[index].x + dx, this._areas[index].y + dy)
+    editor.layers.forEach((layer, index) => {
+      layer.setPosition(this._areas[index].x + dx, this._areas[index].y + dy)
     })
     editor.repaint()
   }
