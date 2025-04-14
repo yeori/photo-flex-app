@@ -1,7 +1,8 @@
 import { IAction } from '.'
-import { ActionDefinition, PhotoFlexInitParam } from '../..'
+import { ActionDefinition, type IPhotoFlexOp, PhotoFlexInitParam } from '../..'
 import { dom } from '../../util'
 import { ActionMove } from './action-move'
+import { ZoomAction } from './action-zoom'
 
 export class ActionFactory {
   private _el: HTMLElement
@@ -9,7 +10,8 @@ export class ActionFactory {
   private _actions: IAction[] = []
   constructor(
     container: HTMLElement,
-    private readonly _param: PhotoFlexInitParam
+    private readonly _param: PhotoFlexInitParam,
+    private readonly _op: IPhotoFlexOp
   ) {
     const { prefix, toolbar: control } = this._param.classnames!
     this._el = dom.create(`div[data-${prefix}${control}]`, container)
@@ -19,7 +21,8 @@ export class ActionFactory {
     this._defaultActions.set(action.id, action)
   }
   private _installDefaultActions() {
-    this._addToMap(new ActionMove())
+    this._addToMap(new ActionMove(this._op))
+    this._addToMap(new ZoomAction(this._op))
   }
   installActions(params: ActionDefinition[]) {
     params.forEach((param) => {

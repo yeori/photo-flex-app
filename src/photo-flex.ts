@@ -10,12 +10,14 @@ import { ImageDragger } from './dnd/image-drag-dnd'
 import { ImageLayer } from './image-layer'
 import { ActionFactory } from './view/action/action-factory'
 import { mergeParam } from './merge-param'
+import { type IPhotoFlexOp, PhotoFlexOp } from './photo-flex-operation'
+import { EventBus } from './event/event-bus'
 
 const DefaultInit: Required<PhotoFlexInitParam> = {
   width: '400px',
   height: '400px',
   zoom: 'contain',
-  actions: ['move'],
+  actions: ['move', 'zoom'],
   classnames: {
     prefix: 'photo-flex',
     root: '-root',
@@ -39,6 +41,8 @@ export class PhotoFlex {
   private _dnd: DndContext
   private _renderers: IRenderer[] = []
   private _actionFactory: ActionFactory
+  private _operator: IPhotoFlexOp
+  private _eventBus: EventBus
 
   constructor(el: HTMLElement, param?: PhotoFlexInitParam) {
     this._param = mergeParam(DefaultInit, param) as Required<PhotoFlexInitParam>
@@ -56,7 +60,9 @@ export class PhotoFlex {
         y: y - this.height / 2,
       }),
     })
-    this._actionFactory = new ActionFactory(el, this._param)
+    this._eventBus = new EventBus()
+    this._operator = new PhotoFlexOp(this, this._eventBus)
+    this._actionFactory = new ActionFactory(el, this._param, this._operator)
     this._actionFactory.installActions(this._param.actions || [])
     // this._dnd.addListener({
     //   before(e) {
@@ -92,6 +98,9 @@ export class PhotoFlex {
   }
   get imageSources(): ImageSource[] {
     return this._layers.map((layer) => layer.image)
+  }
+  get operator(): IPhotoFlexOp {
+    return this._operator
   }
   private _resize(canvas: HTMLCanvasElement, param: PhotoFlexInitParam) {
     const [w, wUnit] = dom.parseUnit(param.width!)
@@ -132,5 +141,29 @@ export class PhotoFlex {
 
     this._layers.push(layer)
     this.repaint()
+    this._eventBus.emit('open', {
+      image: source,
+      ratio,
+    })
+  }
+  getZoomLevel() {
+    if (this.layers.length === 0) {
+      return -1
+    }
+    return this._layers[0].ratio
+  }
+  updateZoomBy(zoomDelta: number) {
+    this.layers.forEach((layer) => {
+      layer.updateRatioBy(zoomDelta)
+    })
+  }
+  setZoom(zoom: number) {
+    this.layers.forEach((layer) => {
+      layer.setRatio(zoom)
+    })
+    this._eventBus.emit('zoom', {
+      zoom,
+      layer: this.layers[0].uuid,
+    })
   }
 }

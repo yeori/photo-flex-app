@@ -25,6 +25,15 @@ const deepClone = <T = unknown>(src: T): T => {
   })
   return dst
 }
+
+const rand = (iter: number) => {
+  const keys = []
+  keys.push(Date.now().toString(36).substring(2))
+  for (let i = 0; i < iter; i++) {
+    keys.push(Math.random().toString(36).substring(2))
+  }
+  return keys.join('-')
+}
 export class DomUtil {
   isPrimitve(value: unknown) {
     return isPrimitive(value)
@@ -73,11 +82,16 @@ export class DomUtil {
     if (spec.class.length > 0) {
       elem.classList.add(...spec.class)
     }
-    const { data } = spec
+    const { data, attr } = spec
     if (data) {
       Object.keys(data).forEach((key) => {
         const prop = this.toCameCase(key)
         elem.dataset[prop] = data[key]
+      })
+    }
+    if (attr) {
+      Object.keys(attr).forEach((key) => {
+        elem.setAttribute(key, attr[key])
       })
     }
     if (parentEl) {
@@ -165,6 +179,9 @@ export class DomUtil {
       throw new Error('bad unit value: ' + value)
     }
     return [Number(m[1]), m[2]]
+  }
+  randomKey() {
+    return crypto.randomUUID ? crypto.randomUUID() : rand(3)
   }
 }
 export const dom = new DomUtil()

@@ -43,6 +43,14 @@ describe('DomUtil', () => {
     const result = dom.finds<HTMLParagraphElement>(root, '.my-class')
     expect(result.length).toBe(0)
   })
+  it('create input[type=range]', () => {
+    const result = dom.create<HTMLInputElement>('input[type=range]')
+    expect(result.type).toEqual('range')
+  })
+  it('create input[type=text]', () => {
+    const result = dom.create<HTMLInputElement>('input[type=text]')
+    expect(result.type).toEqual('text')
+  })
 
   describe('findOne', () => {
     it('existing element', () => {

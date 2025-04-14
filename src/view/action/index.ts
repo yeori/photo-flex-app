@@ -2,7 +2,7 @@ import { ActionParam } from '../..'
 import { dom } from '../../util'
 
 export interface IAction {
-  bindTo(_el: HTMLElement): unknown
+  bindTo(_el: HTMLElement): void
   id: string
   label: string
   element: HTMLElement

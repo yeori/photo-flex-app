@@ -55,3 +55,5 @@ export type PhotoFlexInitParam = {
 }
 export * from './photo-flex'
 export * from './rendering'
+export * from './event'
+export { type IPhotoFlexOp } from './photo-flex-operation'
