@@ -99,6 +99,11 @@ export class DomUtil {
     }
     return elem
   }
+  appends<T extends Element>(container: T, ...elems: Element[]) {
+    elems.forEach((elem) => {
+      container.appendChild(elem)
+    })
+  }
 
   /**
    * set value in `dataset` of an element.
@@ -181,7 +186,7 @@ export class DomUtil {
     return [Number(m[1]), m[2]]
   }
   randomKey() {
-    return crypto.randomUUID ? crypto.randomUUID() : rand(3)
+    return crypto.randomUUID ? crypto.randomUUID() : rand(2)
   }
 }
 export const dom = new DomUtil()

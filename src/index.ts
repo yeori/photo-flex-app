@@ -24,7 +24,7 @@ export type ClassNameParam = {
   canvas?: string
 }
 /**
- * initial configuration paraters
+ * initial configuration paramters
  */
 export type PhotoFlexInitParam = {
   /**
@@ -39,10 +39,15 @@ export type PhotoFlexInitParam = {
   height?: string
   /**
    * zoom mode of image.
-   * e.g. "100%" means 1:1 zoom, "contain" means zoom to fit the editor, "cover" means zoom to cover the editor
+   * e.g. 0.5(means 50%), "contain"(zoom to fit the viewport), "cover" means(zoom to cover the viewport)
    * @default "contain"
    */
   zoom?: number | 'contain' | 'cover'
+  /**
+   * mouse wheel sensitivity
+   * @default 0.002
+   */
+  wheelSensitivity?: number
   /**
    * classnames for ui elements. setting null does not aassign the default classnames
    */

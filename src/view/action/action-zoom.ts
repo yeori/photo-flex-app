@@ -6,7 +6,7 @@ import { dom } from '../../util'
 export class ZoomAction implements IAction {
   private _param: ActionParam
   private _el: HTMLDivElement
-  private _unsub: Unsubscriber | undefined
+  private _unsub: Unsubscriber[] = []
 
   constructor(private readonly op: IPhotoFlexOp) {
     this._param = {
@@ -35,11 +35,15 @@ export class ZoomAction implements IAction {
       this.op.setZoom(Number(value))
     })
     container.appendChild(this._el)
-    this._unsub = this.op.eventBus.subscribe(
-      'open',
-      (paylod: ImageOpenEvent) => {
+    this._unsub.push(
+      this.op.eventBus.subscribe('open', (paylod: ImageOpenEvent) => {
         input.value = `${paylod.ratio}`
-      }
+      })
+    )
+    this._unsub.push(
+      this.op.eventBus.subscribe('zoom', (paylod) => {
+        input.value = `${paylod.zoom}`
+      })
     )
   }
   updateZoom(zoomLevel: number) {
@@ -49,8 +53,13 @@ export class ZoomAction implements IAction {
     this.op.setZoom(0.1)
   }
   dispose(): void {
-    if (this._unsub) {
-      this._unsub()
-    }
+    this._unsub.forEach((unsub) => {
+      try {
+        unsub()
+      } catch (error) {
+        console.error('Error during unsubscribing:', error)
+      }
+    })
+    this._unsub = []
   }
 }

@@ -2,9 +2,10 @@ import { type EventBus } from './event/event-bus'
 import { PhotoFlex } from './photo-flex'
 
 export interface IPhotoFlexOp {
+  updateZoomBy(zoomDelta: number): void
   eventBus: EventBus
   currentZoom: number
-  hello(): unknown
+  hello(): void
   setZoom(zoomLevel: number): void
 }
 
@@ -25,6 +26,11 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   setZoom(zoomLevel: number): void {
     const { target } = this
     target.setZoom(zoomLevel)
+    target.repaint()
+  }
+  updateZoomBy(zoomDelta: number): void {
+    const { target } = this
+    target.updateZoomBy(zoomDelta)
     target.repaint()
   }
 }

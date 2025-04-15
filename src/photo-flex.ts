@@ -12,11 +12,15 @@ import { ActionFactory } from './view/action/action-factory'
 import { mergeParam } from './merge-param'
 import { type IPhotoFlexOp, PhotoFlexOp } from './photo-flex-operation'
 import { EventBus } from './event/event-bus'
+import { RulerView } from './view/ruler/ruler-view'
+import { WheelController } from './interaction/wheel-controller'
+import { PhotoFlexContext } from './photo-flex-context'
 
 const DefaultInit: Required<PhotoFlexInitParam> = {
   width: '400px',
   height: '400px',
   zoom: 'contain',
+  wheelSensitivity: 0.002,
   actions: ['move', 'zoom'],
   classnames: {
     prefix: 'photo-flex',
@@ -30,6 +34,7 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
  * image editor panel
  */
 export class PhotoFlex {
+  private _boardEl: HTMLDivElement
   private _canvas: HTMLCanvasElement
   private _ctx: CanvasRenderingContext2D
   private _layers: ImageLayer[] = []
@@ -43,14 +48,19 @@ export class PhotoFlex {
   private _actionFactory: ActionFactory
   private _operator: IPhotoFlexOp
   private _eventBus: EventBus
+  private _rulerView: RulerView
+  private _wheelControl: WheelController
+  private _photoFlexContext: PhotoFlexContext
 
   constructor(el: HTMLElement, param?: PhotoFlexInitParam) {
     this._param = mergeParam(DefaultInit, param) as Required<PhotoFlexInitParam>
     const { prefix, root, canvas: cvs } = this._param.classnames!
     dom.bindDataset(el, `${prefix}${root}`, '')
-    let canvasEl = dom.findOne<HTMLCanvasElement>(el, `canvas`)
-
-    this._canvas = canvasEl || dom.create(`canvas[data-${prefix}${cvs}]`, el)
+    this._boardEl = dom.create<HTMLDivElement>(
+      '.ruler[data-photo-flex-board]',
+      el
+    )
+    this._canvas = dom.create(`canvas[data-${prefix}${cvs}]`, this._boardEl)
     this._pixelRatio = self.devicePixelRatio || 1
     this._ctx = this._resize(this._canvas, this._param)
     this._renderers.push(new GridRenderer())
@@ -64,17 +74,19 @@ export class PhotoFlex {
     this._operator = new PhotoFlexOp(this, this._eventBus)
     this._actionFactory = new ActionFactory(el, this._param, this._operator)
     this._actionFactory.installActions(this._param.actions || [])
-    // this._dnd.addListener({
-    //   before(e) {
-    //     console.log(`start(${e.sx}, ${e.sy})`)
-    //   },
-    //   dragging(e) {
-    //     console.log(`start(${e.sx}, ${e.sy}) delta (${e.dx}, ${e.dy})`)
-    //   },
-    //   end(e) {
-    //     console.log(`start(${e.sx}, ${e.sy}) end (${e.sy + e.dy})`)
-    //   },
-    // })
+    this._photoFlexContext = new PhotoFlexContext(
+      this._operator,
+      this._param,
+      DefaultInit
+    )
+    {
+      this._rulerView = new RulerView(this._photoFlexContext)
+      this._rulerView.bindTo(this._boardEl)
+    }
+    {
+      this._wheelControl = new WheelController(this._photoFlexContext)
+      this._wheelControl.bindTo(this._boardEl)
+    }
     this._dnd.addListener(new ImageDragger(this))
   }
   get width() {
@@ -155,6 +167,11 @@ export class PhotoFlex {
   updateZoomBy(zoomDelta: number) {
     this.layers.forEach((layer) => {
       layer.updateRatioBy(zoomDelta)
+    })
+    const { ratio, uuid } = this.layers[0]
+    this._eventBus.emit('zoom', {
+      zoom: ratio,
+      layer: uuid,
     })
   }
   setZoom(zoom: number) {
