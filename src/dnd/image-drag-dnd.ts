@@ -6,16 +6,17 @@ export class ImageDragger implements DragListener {
   private _origins: Point[] = []
   constructor(readonly editor: PhotoFlex) {}
   before(): void {
-    const { editor } = this
-    this._origins = editor.layers.map((layer) =>
-      Object.assign({}, layer.getOrigin())
-    )
+    this._origins = this.editor.getLayerOrigins()
   }
   dragging(e: DragEvent): void {
     const { editor } = this
     const { dx, dy } = e
-    editor.layers.forEach((layer, index) => {
-      layer.setOrigin(this._origins[index].x + dx, this._origins[index].y + dy)
+    editor.getLayers().forEach((_, index) => {
+      editor.setLayerOrigin(
+        index,
+        this._origins[index].x + dx,
+        this._origins[index].y + dy
+      )
     })
     editor.repaint()
   }
