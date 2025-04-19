@@ -1,6 +1,7 @@
 import { IAction } from '.'
-import { ActionParam, IPhotoFlexOp } from '../..'
+import { ActionParam } from '../..'
 import { ImageOpenEvent, Unsubscriber } from '../../event'
+import { PhotoFlexContext } from '../../photo-flex-context'
 import { dom } from '../../util'
 
 export class ZoomAction implements IAction {
@@ -8,7 +9,7 @@ export class ZoomAction implements IAction {
   private _el: HTMLDivElement
   private _unsub: Unsubscriber[] = []
 
-  constructor(private readonly op: IPhotoFlexOp) {
+  constructor(private readonly _ctx: PhotoFlexContext) {
     this._param = {
       id: 'action:zoom',
       label: 'zoom',
@@ -26,31 +27,32 @@ export class ZoomAction implements IAction {
     return this._el
   }
   bindTo(container: HTMLElement): void {
+    const { op } = this._ctx
     const input = dom.create<HTMLInputElement>(
       'input[type=range][data-action-zoom][min=0.1][max=4][step=0.1][value=1]',
       this._el
     )
     input.addEventListener('change', (e: Event) => {
       const { value } = e.target as HTMLInputElement
-      this.op.setZoom(Number(value))
+      op.setZoom(Number(value))
     })
     container.appendChild(this._el)
     this._unsub.push(
-      this.op.eventBus.subscribe('open', (paylod: ImageOpenEvent) => {
+      op.eventBus.subscribe('open', (paylod: ImageOpenEvent) => {
         input.value = `${paylod.ratio}`
       })
     )
     this._unsub.push(
-      this.op.eventBus.subscribe('zoom', (paylod) => {
+      op.eventBus.subscribe('zoom', (paylod) => {
         input.value = `${paylod.zoom}`
       })
     )
   }
   updateZoom(zoomLevel: number) {
-    this.op.setZoom(zoomLevel)
+    this._ctx.op.setZoom(zoomLevel)
   }
   run(): void {
-    this.op.setZoom(0.1)
+    this._ctx.op.setZoom(0.1)
   }
   dispose(): void {
     this._unsub.forEach((unsub) => {

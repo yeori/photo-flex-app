@@ -1,0 +1,62 @@
+import { Unsubscriber } from '../event'
+import { IPhotoFlexOp } from '../photo-flex-operation'
+import { dom } from '../util'
+
+export class ModalUI extends HTMLElement {
+  private _unsub?: Unsubscriber
+  constructor(readonly op: IPhotoFlexOp) {
+    super()
+    this.attachShadow({ mode: 'open' })
+    this.shadowRoot!.innerHTML = `<link rel="stylesheet" href="/modal-ui.css">`
+  }
+  private get _modalEl(): HTMLElement {
+    if (!this.shadowRoot) {
+      throw new Error('not initialized')
+    }
+    return this.shadowRoot.querySelector('.content')!
+  }
+  private get _dimmerEl(): HTMLElement {
+    if (!this.shadowRoot) {
+      throw new Error('not initialized')
+    }
+    return this.shadowRoot.querySelector('.dimmer')!
+  }
+  private clear(): void {
+    dom.remove(this._modalEl, this._dimmerEl)
+  }
+  bindTo(container: HTMLElement) {
+    container.appendChild(this)
+  }
+  connectedCallback() {}
+  show(content: HTMLElement) {
+    dom.creates<ShadowRoot>(this.shadowRoot!, '.modal.dimmer', '.modal.content')
+    setTimeout(() => {
+      ;[this._dimmerEl, this._modalEl].forEach((el) =>
+        el.classList.add('visible')
+      )
+      this._modalEl.appendChild(content)
+      this._unsub = dom.event.on(this._dimmerEl, 'click', () => {
+        this.hide()
+      })
+    })
+  }
+
+  hide() {
+    dom.event.transition([this._dimmerEl, this._modalEl], {
+      trigger: (el) => (el.style.opacity = '0'),
+      end: (el: HTMLElement, _, done) => {
+        el.style.opacity = ''
+        el.classList.remove('visible')
+        dom.emptify(el)
+        if (done) {
+          this.clear()
+        }
+      },
+    })
+
+    if (this._unsub) {
+      this._unsub()
+    }
+    delete this._unsub
+  }
+}

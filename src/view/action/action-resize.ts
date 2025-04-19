@@ -1,23 +1,24 @@
-import { IAction } from '.'
+import { AbstractAction } from '.'
+import { DimensionSelector } from '../../component/dimension-selector'
+import { PhotoFlexContext } from '../../photo-flex-context'
+import { dom } from '../../util'
 
-export class ResizeAction implements IAction {
-  id: string
-  label: string
-  element: HTMLElement
-
-  constructor(id: string, label: string) {
-    this.id = id
-    this.label = label
-    this.element = document.createElement('div')
+export class ResizeAction extends AbstractAction {
+  constructor(private readonly _ctx: PhotoFlexContext) {
+    super({ id: 'action:resize', label: 'Resize' })
+  }
+  protected createElement(): HTMLElement {
+    return dom.create('button')
   }
 
-  bindTo(el: HTMLElement): void {
-    this.element = el
+  bindTo(container: HTMLElement): void {
+    super.bindTo(container)
+    this._ctx.op.eventBus.subscribe('open', () => {
+      console.log('[done]')
+    })
   }
 
   run(): void {
-    if (!this.element) {
-      throw new Error('element not initialized')
-    }
+    this._ctx.op.showModal(new DimensionSelector(this._ctx))
   }
 }

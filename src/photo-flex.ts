@@ -15,13 +15,14 @@ import { RulerView } from './view/ruler/ruler-view'
 import { WheelController } from './interaction/wheel-controller'
 import { PhotoFlexContext } from './photo-flex-context'
 import { CanvasRenderer } from './rendering/canvas-view'
+import { ModalUI } from './component/modal-ui'
 
 const DefaultInit: Required<PhotoFlexInitParam> = {
   width: '400px',
   height: '400px',
   zoom: 'contain',
   wheelSensitivity: 0.002,
-  actions: ['move', 'zoom'],
+  actions: ['move', 'resize', 'zoom'],
   classnames: {
     prefix: 'photo-flex',
     root: '-root',
@@ -47,6 +48,7 @@ export class PhotoFlex implements Viewport {
   private _wheelControl: WheelController
   private _photoFlexContext: PhotoFlexContext
   private _canvasView: CanvasRenderer
+  private _modalUI?: ModalUI
 
   /**
    * Constructor for PhotoFlex.
@@ -73,24 +75,25 @@ export class PhotoFlex implements Viewport {
         y: y - this.height / 2,
       }),
     })
-    this._renderers.push(this._canvasView)
-    this._renderers.push(new GridRenderer(this._param))
     this._eventBus = new EventBus()
     this._operator = new PhotoFlexOp(this, this._eventBus)
-    this._actionFactory = new ActionFactory(el, this._param, this._operator)
-    this._actionFactory.installActions(this._param.actions || [])
     this._photoFlexContext = new PhotoFlexContext(
       this._operator,
       this._param,
       DefaultInit
     )
+    this._renderers.push(this._canvasView)
+    this._renderers.push(new GridRenderer(this._photoFlexContext))
+    this._actionFactory = new ActionFactory(el, this._photoFlexContext)
+    this._actionFactory.installActions(this._param.actions || [])
     this._rulerView = new RulerView(this._photoFlexContext)
     this._rulerView.bindTo(this._boardEl)
     this._wheelControl = new WheelController(this._photoFlexContext)
     this._wheelControl.bindTo(this._boardEl)
     this._dnd.addListener(new ImageDragger(this))
-  }
 
+    this.installUI(el)
+  }
   get width() {
     return this._canvasView.width
   }
@@ -109,9 +112,20 @@ export class PhotoFlex implements Viewport {
       return 'custom'
     }
   }
-
   get operator(): IPhotoFlexOp {
     return this._operator
+  }
+  get modalUI() {
+    if (!this._modalUI) {
+      throw new Error('modal ui is not initialized')
+    }
+    return this._modalUI
+  }
+  private installUI(container: HTMLElement) {
+    customElements.define('modal-ui', ModalUI)
+    const modal = new ModalUI(this._operator)
+    modal.bindTo(container)
+    this._modalUI = modal
   }
 
   getLayers(): ImageLayer[] {
@@ -124,6 +138,15 @@ export class PhotoFlex implements Viewport {
 
   setLayerOrigin(index: number, x: number, y: number): void {
     this._canvasView.setLayerOrigin(index, x, y)
+  }
+  /**
+   * resize canvas size
+   */
+  resizeViewport(width: number, height: number) {
+    this._param.width = `${width}px`
+    this._param.height = `${height}px`
+    this._canvasView.resize()
+    this.repaint()
   }
 
   repaint() {

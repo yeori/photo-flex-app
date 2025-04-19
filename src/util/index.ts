@@ -1,5 +1,6 @@
 import { CssSelector } from '..'
 import { parseCssSelector } from './css-selector'
+import { EventUtil } from './event-util'
 const PRIMITIVES = 'number,string,boolean'.split(',')
 const isPrimitive = (o: unknown): boolean => PRIMITIVES.includes(typeof o)
 
@@ -35,6 +36,10 @@ const rand = (iter: number) => {
   return keys.join('-')
 }
 export class DomUtil {
+  readonly event: EventUtil
+  constructor() {
+    this.event = new EventUtil()
+  }
   isPrimitve(value: unknown) {
     return isPrimitive(value)
   }
@@ -55,14 +60,16 @@ export class DomUtil {
    * @param selectors css selector syntax for elements
    * @param parentEl
    */
-  creates<T extends HTMLElement = HTMLElement>(
-    parentEl: HTMLElement,
+  creates<T extends Node = HTMLElement>(
+    parentEl: T,
     ...selectors: CssSelector[]
   ) {
     if (selectors.length === 0) {
       return []
     }
-    return selectors.map((selector) => this.create<T>(selector, parentEl))
+    return selectors.map((selector) =>
+      this.create<HTMLElement>(selector, parentEl)
+    )
   }
   /**
    * create an element from the css selector syntax. If parentEl is given, the new element will be appended to it.
@@ -72,7 +79,7 @@ export class DomUtil {
    */
   create<T extends HTMLElement = HTMLElement>(
     selector: CssSelector,
-    parentEl?: HTMLElement
+    parentEl?: Node
   ) {
     const spec = parseCssSelector(selector)
     const elem = document.createElement(spec.tag) as T
@@ -103,6 +110,22 @@ export class DomUtil {
     elems.forEach((elem) => {
       container.appendChild(elem)
     })
+  }
+  /**
+   * remove the supplied element(s) from the DOM
+   * @param elements
+   */
+  remove(...elements: HTMLElement[]) {
+    elements.forEach((el) => el.remove())
+  }
+  /**
+   * remove all the child elements from the given container element
+   * @param container parent element
+   */
+  emptify<T extends Element>(container: T) {
+    while (container.firstChild) {
+      container.removeChild(container.firstChild)
+    }
   }
 
   /**

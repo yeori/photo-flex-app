@@ -17,20 +17,20 @@ export class CanvasRenderer implements IRenderer {
    * Constructor for CanvasRenderer.
    * @param boardEl
    * @param pixelRatio
-   * @param param
+   * @_param _param
    */
   constructor(
     private boardEl: HTMLDivElement,
     pixelRatio: number,
-    param: PhotoFlexInitParam
+    private readonly _param: PhotoFlexInitParam
   ) {
-    const { prefix, canvas } = param.classnames!
+    const { prefix, canvas } = _param.classnames!
     this._canvas = dom.create<HTMLCanvasElement>(
       `canvas[data-${prefix}${canvas}]`,
       this.boardEl
     )
     this._pixelRatio = pixelRatio
-    this._ctx = this._resize(this._canvas, param)
+    this._ctx = this._resize(this._canvas, _param)
   }
 
   get width() {
@@ -113,6 +113,9 @@ export class CanvasRenderer implements IRenderer {
     const ctx = param.loadContext!(canvas)
     ctx.scale(this._pixelRatio, this._pixelRatio)
     return ctx
+  }
+  resize() {
+    this._ctx = this._resize(this._canvas, this._param)
   }
 
   clear() {

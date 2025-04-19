@@ -3,7 +3,12 @@ import dts from 'vite-plugin-dts'
 
 export default defineConfig({
   plugins: [
-    dts({ copyDtsFiles: false, insertTypesEntry: true, rollupTypes: true, staticImport: true }),
+    dts({
+      copyDtsFiles: false,
+      insertTypesEntry: true,
+      rollupTypes: true,
+      staticImport: true,
+    }),
   ],
   build: {
     sourcemap: true,

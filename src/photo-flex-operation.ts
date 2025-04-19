@@ -2,11 +2,13 @@ import { type EventBus } from './event/event-bus'
 import { PhotoFlex } from './photo-flex'
 
 export interface IPhotoFlexOp {
+  resizeViewport(width: number, height: number): void
   updateZoomBy(zoomDelta: number): void
   eventBus: EventBus
   currentZoom: number
   hello(): void
   setZoom(zoomLevel: number): void
+  showModal(elem: HTMLElement): void
 }
 
 export class PhotoFlexOp implements IPhotoFlexOp {
@@ -20,6 +22,9 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   get eventBus() {
     return this._eventBus
   }
+  resizeViewport(width: number, height: number): void {
+    this.target.resizeViewport(width, height)
+  }
   hello(): void {
     console.log('hello')
   }
@@ -32,5 +37,8 @@ export class PhotoFlexOp implements IPhotoFlexOp {
     const { target } = this
     target.updateZoomBy(zoomDelta)
     target.repaint()
+  }
+  showModal(elem: HTMLElement): void {
+    this.target.modalUI.show(elem)
   }
 }

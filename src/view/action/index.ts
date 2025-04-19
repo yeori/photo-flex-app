@@ -13,15 +13,15 @@ export interface IAction {
 //   label: string
 // }
 export abstract class AbstractAction implements IAction {
-  protected _el: HTMLButtonElement
+  protected _el: HTMLElement
 
   constructor(protected param: ActionParam) {
-    this._el = dom.create('button')
+    this._el = this.createElement ? this.createElement() : dom.create('button')
     this._el.dataset.id = param.id
     this._el.innerText = param.label
-    this._el.addEventListener('click', () => {
-      this.run()
-    })
+  }
+  protected createElement?(): HTMLElement {
+    return dom.create('button')
   }
   get id(): string {
     return this.param.id
@@ -31,9 +31,12 @@ export abstract class AbstractAction implements IAction {
   }
   bindTo(parent: HTMLElement): void {
     parent.appendChild(this._el)
+    this._el.addEventListener('click', () => {
+      this.run()
+    })
   }
   abstract run(): void
-  get element(): HTMLButtonElement {
+  get element(): HTMLElement {
     return this._el
   }
 }

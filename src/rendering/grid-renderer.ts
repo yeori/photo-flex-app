@@ -1,49 +1,34 @@
-import { IRenderer, PhotoFlexInitParam } from '../'
+import { IRenderer } from '../'
+import { PhotoFlexContext } from '../photo-flex-context'
 
 /**
  * Grid renderer.
  */
 export class GridRenderer implements IRenderer {
-  private _width: number
-  private _height: number
-
   /**
    * Constructor for GridRenderer.
-   * @param param
+   * @param _ctx - PhotoFlexContext
    */
-  constructor(private readonly _param: PhotoFlexInitParam) {
-    const [w] = _parseUnit(_param.width!)
-    const [h] = _parseUnit(_param.height!)
-    this._width = w
-    this._height = h
-  }
+  constructor(private readonly _ctx: PhotoFlexContext) {}
 
   /**
    * Draw horizontal and vertical line passing the center of viewport
    * @param ctx
    */
   render(ctx: CanvasRenderingContext2D): void {
+    const { width, height } = this._ctx.viewportSize
     ctx.save()
     ctx.strokeStyle = 'red'
     ctx.lineWidth = 1
     ctx.beginPath()
-    const cw = this._width / 2
-    const ch = this._height / 2
+    const cw = width / 2
+    const ch = height / 2
     ctx.moveTo(0, ch)
-    ctx.lineTo(this._width, ch)
+    ctx.lineTo(width, ch)
     ctx.moveTo(cw, 0)
-    ctx.lineTo(cw, this._height)
+    ctx.lineTo(cw, height)
     ctx.closePath()
     ctx.stroke()
     ctx.restore()
   }
-}
-
-function _parseUnit(exp: string): [number, string] {
-  const result = /([0-9.]+)(.*)/.exec(exp)
-  if (result) {
-    const [, num, unit] = result
-    return [parseFloat(num), unit]
-  }
-  return [0, '']
 }

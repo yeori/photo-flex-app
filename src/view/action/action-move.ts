@@ -1,11 +1,11 @@
 import { AbstractAction } from '.'
-import { IPhotoFlexOp } from '../../photo-flex-operation'
+import { PhotoFlexContext } from '../../photo-flex-context'
 
 export class ActionMove extends AbstractAction {
-  constructor(private readonly op: IPhotoFlexOp) {
+  constructor(private readonly _ctx: PhotoFlexContext) {
     super({ id: 'action:move', label: 'Move' })
   }
   run(): void {
-    this.op.hello()
+    this._ctx.op.hello()
   }
 }

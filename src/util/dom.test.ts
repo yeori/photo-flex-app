@@ -88,7 +88,7 @@ describe('DomUtil', () => {
     })
 
     it('an error for multiple elements', () => {
-      dom.creates<HTMLParagraphElement>(root, 'p.one', 'p.one')
+      dom.creates(root, 'p.one', 'p.one')
       expect(() =>
         dom.findOne<HTMLParagraphElement>(root, '.one')
       ).toThrowError()
