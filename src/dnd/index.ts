@@ -33,3 +33,16 @@ export interface DragListener {
   dragging(e: DragEvent): void
   end(e: DragEvent): void
 }
+
+export interface ZoomEvent {
+  scale: number
+  centerX: number
+  centerY: number
+  originalEvent: TouchEvent
+}
+
+export interface ZoomListener {
+  before?(e: TouchEvent): void
+  zooming(e: ZoomEvent): void
+  end?(e: TouchEvent): void
+}

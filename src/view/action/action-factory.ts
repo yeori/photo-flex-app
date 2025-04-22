@@ -2,6 +2,7 @@ import { IAction } from '.'
 import { ActionDefinition } from '../..'
 import { PhotoFlexContext } from '../../photo-flex-context'
 import { dom } from '../../util'
+import { ActionFitCover } from './action-fit-scale'
 import { ActionMove } from './action-move'
 import { ResizeAction } from './action-resize'
 import { ZoomAction } from './action-zoom'
@@ -11,8 +12,10 @@ export class ActionFactory {
   private _defaultActions: Map<string, IAction> = new Map()
   private _actions: IAction[] = []
   constructor(container: HTMLElement, private readonly _ctx: PhotoFlexContext) {
-    const { prefix, toolbar: control } = this._ctx.param.classnames!
-    this._el = dom.create(`div[data-${prefix}${control}]`, container)
+    this._el = dom.create(
+      `div${this._ctx.resolveDataName('toolbar')}`,
+      container
+    )
     this._installDefaultActions()
   }
   private _addToMap(action: IAction) {
@@ -22,6 +25,8 @@ export class ActionFactory {
     this._addToMap(new ActionMove(this._ctx))
     this._addToMap(new ResizeAction(this._ctx))
     this._addToMap(new ZoomAction(this._ctx))
+    this._addToMap(new ActionFitCover(this._ctx, 'cover'))
+    this._addToMap(new ActionFitCover(this._ctx, 'contain'))
   }
   installActions(params: ActionDefinition[]) {
     params.forEach((param) => {

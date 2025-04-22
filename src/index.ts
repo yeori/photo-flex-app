@@ -9,17 +9,18 @@ export type ActionParam = {
 }
 export type ActionDefinition = string | ActionParam
 /**
- * classnames for ui elements.
+ * datanames for ui elements.
  *
  * ```
- * prefix: 'photo-flex'
+ * prefix: 'photoflex'
  * toolbar: `${prefix}-toolbar`,
  * canvas: '${prefix}-canvas',
  * ```
  */
-export type ClassNameParam = {
+export type DataNameParam = {
   prefix?: string
   root?: string
+  board?: string
   toolbar?: string
   canvas?: string
 }
@@ -44,14 +45,14 @@ export type PhotoFlexInitParam = {
    */
   zoom?: number | 'contain' | 'cover'
   /**
-   * mouse wheel sensitivity
+   * sensitivity when zooming by mouse wheel
    * @default 0.002
    */
   wheelSensitivity?: number
   /**
    * classnames for ui elements. setting null does not aassign the default classnames
    */
-  classnames?: null | ClassNameParam
+  classnames?: null | DataNameParam
   /**
    * actions to be installed
    */

@@ -3,6 +3,11 @@ import { ImageLayer } from '../image-layer'
 import { type Point } from '../scale'
 import { PhotoFlexInitParam } from '../'
 import { dom } from '../util'
+import { PhotoFlexContext } from '../photo-flex-context'
+/**
+ * translates the given point relative to origin of canvas.
+ */
+export type CanvasOriginResolver = (point: Point) => Point
 
 /**
  * Renderer for canvas.
@@ -11,7 +16,7 @@ export class CanvasRenderer implements IRenderer {
   private layers: ImageLayer[] = []
   private _canvas: HTMLCanvasElement
   private _ctx: CanvasRenderingContext2D
-  private readonly _pixelRatio: number
+  private readonly _resolveOrigin: CanvasOriginResolver
 
   /**
    * Constructor for CanvasRenderer.
@@ -21,16 +26,23 @@ export class CanvasRenderer implements IRenderer {
    */
   constructor(
     private boardEl: HTMLDivElement,
-    pixelRatio: number,
-    private readonly _param: PhotoFlexInitParam
+    private _pixelRatio: number,
+    private readonly _context: PhotoFlexContext // private readonly _param: PhotoFlexInitParam
   ) {
-    const { prefix, canvas } = _param.classnames!
+    const { prefix, canvas } = this._context.param.classnames!
     this._canvas = dom.create<HTMLCanvasElement>(
       `canvas[data-${prefix}${canvas}]`,
       this.boardEl
     )
-    this._pixelRatio = pixelRatio
-    this._ctx = this._resize(this._canvas, _param)
+    this._ctx = this._resize(this._canvas, this._context.param)
+    this._resolveOrigin = (point: Point) => {
+      const x = this.width / 2
+      const y = this.height / 2
+      return { x: point.x + x, y: point.y + y }
+    }
+  }
+  get originReslover() {
+    return this._resolveOrigin
   }
 
   get width() {
@@ -115,10 +127,28 @@ export class CanvasRenderer implements IRenderer {
     return ctx
   }
   resize() {
-    this._ctx = this._resize(this._canvas, this._param)
+    this._ctx = this._resize(this._canvas, this._context.param)
   }
 
   clear() {
     this._ctx.clearRect(0, 0, this.width, this.height)
+  }
+
+  /**
+   * capture current viewport
+   */
+  async capture(): Promise<{ imageURL: string; name: string }> {
+    const buffer = document.createElement('canvas')
+    const { width, height } = this
+    buffer.width = width
+    buffer.height = height
+    buffer.style.width = `${width}px`
+    buffer.style.height = `${height}px`
+    const ctx = buffer.getContext('2d')!
+    const layer = this.getFirstLayer()!
+    layer.draw(ctx)
+    const { mimeType, name } = layer.image
+    const imageURL = buffer.toDataURL(mimeType)
+    return { imageURL, name }
   }
 }

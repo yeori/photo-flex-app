@@ -4,6 +4,7 @@ import { dom } from '../util'
 
 export class ModalUI extends HTMLElement {
   private _unsub?: Unsubscriber
+  private _visible: boolean = false
   constructor(readonly op: IPhotoFlexOp) {
     super()
     this.attachShadow({ mode: 'open' })
@@ -30,6 +31,7 @@ export class ModalUI extends HTMLElement {
   connectedCallback() {}
   show(content: HTMLElement) {
     dom.creates<ShadowRoot>(this.shadowRoot!, '.modal.dimmer', '.modal.content')
+    this._visible = true
     setTimeout(() => {
       ;[this._dimmerEl, this._modalEl].forEach((el) =>
         el.classList.add('visible')
@@ -42,6 +44,9 @@ export class ModalUI extends HTMLElement {
   }
 
   hide() {
+    if (!this._visible) {
+      return
+    }
     dom.event.transition([this._dimmerEl, this._modalEl], {
       trigger: (el) => (el.style.opacity = '0'),
       end: (el: HTMLElement, _, done) => {
@@ -58,5 +63,6 @@ export class ModalUI extends HTMLElement {
       this._unsub()
     }
     delete this._unsub
+    this._visible = false
   }
 }

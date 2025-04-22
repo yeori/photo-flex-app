@@ -16,18 +16,20 @@ import { WheelController } from './interaction/wheel-controller'
 import { PhotoFlexContext } from './photo-flex-context'
 import { CanvasRenderer } from './rendering/canvas-view'
 import { ModalUI } from './component/modal-ui'
+import { ZoomByPinch } from './dnd/zoom-by-pinch'
 
 const DefaultInit: Required<PhotoFlexInitParam> = {
   width: '400px',
   height: '400px',
   zoom: 'contain',
   wheelSensitivity: 0.002,
-  actions: ['move', 'resize', 'zoom'],
+  actions: ['move', 'resize', 'zoom', 'fit-cover', 'fit-contain'],
   classnames: {
-    prefix: 'photo-flex',
-    root: '-root',
-    canvas: '-canvas',
-    toolbar: '-toolbar',
+    prefix: 'photoflex',
+    board: 'board',
+    root: 'root',
+    canvas: 'canvas',
+    toolbar: 'toolbar',
   },
   loadContext: (canvas) => canvas.getContext('2d')!,
 }
@@ -56,18 +58,27 @@ export class PhotoFlex implements Viewport {
    * @param param
    */
   constructor(el: HTMLElement, param?: PhotoFlexInitParam) {
+    this._eventBus = new EventBus()
     this._param = mergeParam(DefaultInit, param) as Required<PhotoFlexInitParam>
+    this._operator = new PhotoFlexOp(this, this._eventBus)
+    const ctx = (this._photoFlexContext = new PhotoFlexContext(
+      this._operator,
+      this._param,
+      DefaultInit
+    ))
     const { prefix, root } = this._param.classnames!
-    dom.bindDataset(el, `${prefix}${root}`, '')
+    dom.bindDataset(el, `${prefix}-${root}`, '')
+
     this._boardEl = dom.create<HTMLDivElement>(
-      '.ruler[data-photo-flex-board]',
+      `.ruler${ctx.resolveDataName('board')}`,
       el
     )
     this._pixelRatio = self.devicePixelRatio || 1
+
     this._canvasView = new CanvasRenderer(
       this._boardEl,
       this._pixelRatio,
-      this._param
+      this._photoFlexContext
     )
     this._dnd = new DndContext(this._canvasView.canvas, {
       translate: (_, x, y) => ({
@@ -75,13 +86,7 @@ export class PhotoFlex implements Viewport {
         y: y - this.height / 2,
       }),
     })
-    this._eventBus = new EventBus()
-    this._operator = new PhotoFlexOp(this, this._eventBus)
-    this._photoFlexContext = new PhotoFlexContext(
-      this._operator,
-      this._param,
-      DefaultInit
-    )
+
     this._renderers.push(this._canvasView)
     this._renderers.push(new GridRenderer(this._photoFlexContext))
     this._actionFactory = new ActionFactory(el, this._photoFlexContext)
@@ -90,7 +95,8 @@ export class PhotoFlex implements Viewport {
     this._rulerView.bindTo(this._boardEl)
     this._wheelControl = new WheelController(this._photoFlexContext)
     this._wheelControl.bindTo(this._boardEl)
-    this._dnd.addListener(new ImageDragger(this))
+    this._dnd.addDragListener(new ImageDragger(this))
+    this._dnd.addZoomListener(new ZoomByPinch(this))
 
     this.installUI(el)
   }
@@ -147,6 +153,12 @@ export class PhotoFlex implements Viewport {
     this._param.height = `${height}px`
     this._canvasView.resize()
     this.repaint()
+    const { image } = this._canvasView.getFirstLayer()!
+    this._eventBus.emit('viewport:resize', {
+      width: width,
+      height: height,
+      image,
+    })
   }
 
   repaint() {
@@ -155,17 +167,27 @@ export class PhotoFlex implements Viewport {
       rendering.render(this._canvasView.ctx)
     })
   }
-
+  /**
+   * calcuates ratio
+   */
+  private _calculateRatio(source: ImageSource, scaleMode?: ScaleMode): number {
+    // use scaleMode to resolve ratio
+    scaleMode = scaleMode || this.scaleMode
+    // const { scaleMode } = this
+    return scaleMode === 'custom'
+      ? (this._param.zoom as number)
+      : ratioResolvers[scaleMode](source, this)
+  }
   async setImage(file: File) {
     const source = await ImageSource.fromFile(file)
-    const { scaleMode } = this
-    const ratio: number =
-      scaleMode === 'custom'
-        ? (this._param.zoom as number)
-        : ratioResolvers[scaleMode](source, this)
-    const { width, height } = this
-    const origin = { x: width / 2, y: height / 2 }
-    const layer = ImageLayer.create(source, origin, ratio)
+    const ratio: number = this._calculateRatio(source)
+    const origin = { x: 0, y: 0 }
+    const layer = ImageLayer.create(
+      source,
+      this._canvasView.originReslover,
+      origin,
+      ratio
+    )
     this._canvasView.addLayer(layer)
     this.repaint()
     this._eventBus.emit('open', {
@@ -173,25 +195,11 @@ export class PhotoFlex implements Viewport {
       ratio,
     })
   }
-
   getZoomLevel(): number {
     const firstLayer = this._canvasView.getFirstLayer()
     return firstLayer ? firstLayer.ratio : -1
   }
-
-  updateZoomBy(zoomDelta: number): void {
-    this._canvasView.updateLayerRatiosBy(zoomDelta)
-    this.repaint()
-    const firstLayer = this._canvasView.getFirstLayer()
-    if (firstLayer) {
-      this._eventBus.emit('zoom', {
-        zoom: firstLayer.ratio,
-        layer: firstLayer.uuid,
-      })
-    }
-  }
-
-  setZoom(zoom: number): void {
+  private _updateZoom(zoom: number) {
     this._canvasView.setLayerRatios(zoom)
     this.repaint()
     const firstLayer = this._canvasView.getFirstLayer()
@@ -201,5 +209,29 @@ export class PhotoFlex implements Viewport {
         layer: firstLayer.uuid,
       })
     }
+  }
+  updateZoomBy(zoomDelta: number): void {
+    this._updateZoom(this.getZoomLevel() + zoomDelta)
+  }
+  setZoom(zoom: number): void {
+    this._updateZoom(zoom)
+  }
+  fitBy(scale: 'cover' | 'contain') {
+    this._canvasView.getLayers().forEach((layer) => {
+      const ratio = this._calculateRatio(layer.image, scale)
+      layer.setRatio(ratio)
+      layer.setOrigin(0, 0)
+    })
+    this.repaint()
+  }
+  /**
+   * capture current viewport
+   */
+  async capture() {
+    const { imageURL, name } = await this._canvasView.capture()
+    const link = document.createElement('a')
+    link.href = imageURL
+    link.download = name
+    link.click()
   }
 }

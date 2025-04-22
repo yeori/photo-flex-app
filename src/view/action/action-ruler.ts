@@ -1,18 +1,20 @@
 import { IAction } from '.'
-import { ActionParam, IPhotoFlexOp } from '../..'
+import { ActionParam } from '../..'
+import { PhotoFlexContext } from '../../photo-flex-context'
 import { dom } from '../../util'
 
 export class RulerAction implements IAction {
   private _hRuler: HTMLElement
   private _vRuler: HTMLElement
   private _param: ActionParam
-  constructor(private readonly op: IPhotoFlexOp) {
+  constructor(private readonly _ctx: PhotoFlexContext) {
     this._param = {
       id: 'action:ruler',
       label: 'ruler',
     }
-    this._hRuler = dom.create('.h[data-photo-flex-ruler]')
-    this._vRuler = dom.create('.v[data-photo-flex-ruler]')
+    const dataname = `[data-${_ctx.param.classnames!.prefix}-ruler]`
+    this._hRuler = dom.create(`.h${dataname}`)
+    this._vRuler = dom.create(`.v${dataname}`)
     dom.create<HTMLSpanElement>('span.label', this._hRuler).innerText = '200'
     dom.create<HTMLSpanElement>('span.label', this._vRuler).innerText = '200'
   }
@@ -30,7 +32,7 @@ export class RulerAction implements IAction {
   run(): void {}
   bindTo(container: HTMLElement) {
     dom.appends(container, this._hRuler, this._vRuler)
-    this.op.eventBus.subscribe('open', (paylod) => {
+    this._ctx.op.eventBus.subscribe('open', (paylod) => {
       const width = paylod.image.width
       const height = paylod.image.height
       dom.findOne(this._hRuler, '.label')!.innerText = `${width}`

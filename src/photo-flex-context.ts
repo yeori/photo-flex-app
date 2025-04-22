@@ -1,4 +1,4 @@
-import { PhotoFlexInitParam } from '.'
+import type { DataNameParam, EventBus, PhotoFlexInitParam } from '.'
 import { IPhotoFlexOp } from './photo-flex-operation'
 import { Viewport } from './scale'
 import { dom } from './util'
@@ -24,5 +24,13 @@ export class PhotoFlexContext {
     const [width] = dom.parseUnit(w)
     const [height] = dom.parseUnit(h)
     return { width, height }
+  }
+  get eventBus(): EventBus {
+    return this._op.eventBus
+  }
+  resolveDataName(viewType: keyof DataNameParam) {
+    const { prefix } = this._param.classnames!
+    const val = this._param.classnames![viewType]
+    return `[data-${prefix}-${val}]`
   }
 }

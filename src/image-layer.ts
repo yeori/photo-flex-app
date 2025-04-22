@@ -1,5 +1,6 @@
 import { ImageSource } from './image-source'
 import { locateOnCenter } from './locator/locate-on-center'
+import { CanvasOriginResolver } from './rendering/canvas-view'
 import { Point, Area } from './scale'
 import { dom } from './util'
 
@@ -11,6 +12,7 @@ export class ImageLayer {
   private constructor(
     public readonly uuid: string,
     private _image: ImageSource,
+    private readonly _resolveOrigin: CanvasOriginResolver,
     private _origin: Point,
     private _ratio: number
   ) {
@@ -52,10 +54,16 @@ export class ImageLayer {
   draw(ctx: CanvasRenderingContext2D) {
     const { bitmap, x, y, width, height } = this._image
     const { _area: a } = this
-    ctx.drawImage(bitmap, x, y, width, height, a.x, a.y, a.width, a.height)
+    const { x: cx, y: cy } = this._resolveOrigin(this._area)
+    ctx.drawImage(bitmap, x, y, width, height, cx, cy, a.width, a.height)
   }
-  static create(image: ImageSource, origin: Point, ratio: number) {
+  static create(
+    image: ImageSource,
+    originResolver: CanvasOriginResolver,
+    origin: Point,
+    ratio: number
+  ) {
     const uuid = dom.randomKey()
-    return new ImageLayer(uuid, image, origin, ratio)
+    return new ImageLayer(uuid, image, originResolver, origin, ratio)
   }
 }

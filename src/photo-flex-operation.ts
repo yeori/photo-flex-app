@@ -2,6 +2,7 @@ import { type EventBus } from './event/event-bus'
 import { PhotoFlex } from './photo-flex'
 
 export interface IPhotoFlexOp {
+  hideeModal(): void
   resizeViewport(width: number, height: number): void
   updateZoomBy(zoomDelta: number): void
   eventBus: EventBus
@@ -9,6 +10,9 @@ export interface IPhotoFlexOp {
   hello(): void
   setZoom(zoomLevel: number): void
   showModal(elem: HTMLElement): void
+  hideeModal(): void
+  fitByCover(): void
+  fitByContain(): void
 }
 
 export class PhotoFlexOp implements IPhotoFlexOp {
@@ -40,5 +44,14 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   }
   showModal(elem: HTMLElement): void {
     this.target.modalUI.show(elem)
+  }
+  hideeModal(): void {
+    this.target.modalUI.hide()
+  }
+  fitByCover(): void {
+    this.target.fitBy('cover')
+  }
+  fitByContain(): void {
+    this.target.fitBy('contain')
   }
 }

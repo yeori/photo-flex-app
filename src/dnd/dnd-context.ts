@@ -1,4 +1,11 @@
-import type { DndState, DragListener, DragEvent } from '.'
+import type {
+  DndState,
+  DragListener,
+  DragEvent,
+  ZoomListener,
+  ZoomEvent,
+} from '.'
+
 export type DndInitParam = {
   translate?: (
     state: DndState,
@@ -12,40 +19,43 @@ const DefaultDndParam: Required<DndInitParam> = {
 }
 export class DndContext {
   private _el: HTMLElement
-  private isDragging = false
+  private interactionMode: 'drag' | 'zoom' | null = null
   private startX = 0
   private startY = 0
-  private listeners: DragListener[] = []
+  private initialDistance = 0
+  private dragListeners: DragListener[] = []
+  private zoomListeners: ZoomListener[] = []
   private _rect: DOMRect | undefined
   private _param: Required<DndInitParam>
+
   constructor(el: HTMLElement, param?: DndInitParam) {
     this._el = el
     this._param = (param as Required<DndInitParam>) || DefaultDndParam
     this._initMouseListeners()
-    this._initTouchListeners()
+    this._initTouchListeners() // Will call the updated version
   }
 
-  addListener(listener: DragListener) {
-    this.listeners.push(listener)
+  addDragListener(listener: DragListener) {
+    this.dragListeners.push(listener)
   }
 
-  // private _applyTranslate(
-  //   state: DndState,
-  //   x: number,
-  //   y: number
-  // ): [number, number] {
-  //   if (this._param.translate) {
-  //     const { x: tx, y: ty } = this._param.translate(state, x, y)
-  //     return [tx, ty]
-  //   }
-  //   return [x, y]
-  // }
-  private _emit(
+  // Add method to add zoom listeners
+  addZoomListener(listener: ZoomListener) {
+    this.zoomListeners.push(listener)
+  }
+
+  /**
+   * called for mouse* event and single touch event (dragging)
+   */
+  private _emitDragging(
     state: DndState,
     clientX: number,
     clientY: number,
     originalEvent: MouseEvent | TouchEvent
   ) {
+    if (this.interactionMode !== 'drag' && state !== 'before') return
+    if (this.interactionMode === 'zoom' && state === 'before') return
+
     const dx = clientX - this.startX
     const dy = clientY - this.startY
     const { x: sx, y: sy } = this._param.translate(
@@ -62,75 +72,131 @@ export class DndContext {
       originalEvent,
     })
 
-    for (const listener of this.listeners) {
-      if (state === 'before') {
-        listener.before(event)
-      } else if (state === 'dragging') {
-        listener.dragging(event)
-      } else if (state === 'end') {
-        listener.end(event)
+    if (this.interactionMode === 'drag') {
+      for (const listener of this.dragListeners) {
+        if (state === 'before') {
+          listener.before(event)
+        } else if (state === 'dragging') {
+          listener.dragging(event)
+        } else if (state === 'end') {
+          listener.end(event)
+        }
       }
     }
   }
 
-  // Mouse support
+  private _emitZooming(
+    scale: number,
+    centerX: number,
+    centerY: number,
+    originalEvent: TouchEvent
+  ) {
+    if (this.interactionMode !== 'zoom') return
+
+    const event: ZoomEvent = Object.freeze({
+      scale,
+      centerX,
+      centerY,
+      originalEvent,
+    })
+    for (const listener of this.zoomListeners) {
+      listener.zooming(event)
+    }
+  }
+
+  private _emitZoomStart(originalEvent: TouchEvent) {
+    if (this.interactionMode !== 'zoom') return
+    console.log('Emitting Zoom Start')
+    for (const listener of this.zoomListeners) {
+      listener.before?.(originalEvent)
+    }
+  }
+
+  private _emitZoomEnd(originalEvent: TouchEvent) {
+    const wasZooming = this.interactionMode === 'zoom'
+    if (!wasZooming) return
+    console.log('Emitting Zoom End')
+    for (const listener of this.zoomListeners) {
+      listener.end?.(originalEvent)
+    }
+  }
+
+  private _getTouchDistance(touch1: Touch, touch2: Touch): number {
+    const dx = touch1.clientX - touch2.clientX
+    const dy = touch1.clientY - touch2.clientY
+    return Math.sqrt(dx * dx + dy * dy)
+  }
+
+  private _getTouchCenter(
+    touch1: Touch,
+    touch2: Touch
+  ): { x: number; y: number } {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2,
+    }
+  }
+
   private _initMouseListeners() {
     this._el.addEventListener('mousedown', (e) => {
+      if (this.interactionMode !== null) return
       this._rect = this._el.getBoundingClientRect()
       this.startX = e.clientX - this._rect.left
       this.startY = e.clientY - this._rect.top
-      // ;[this.startX, this.startY] = this._applyTranslate(
-      //   'before',
-      //   e.clientX - this._rect.left,
-      //   e.clientY - this._rect.top
-      // )
-      this.isDragging = true
-      this._emit('before', 0, 0, e)
+      this.interactionMode = 'drag'
+      this._emitDragging('before', 0, 0, e)
     })
 
     window.addEventListener('mousemove', (e) => {
-      if (!this.isDragging) return
-      if (!this._rect) {
-        throw new Error('application bug', { cause: 'DND_RECT_NOT_SET' })
-      }
+      if (this.interactionMode !== 'drag' || !this._rect) return
       const x = e.clientX - this._rect.left
       const y = e.clientY - this._rect.top
-      this._emit('dragging', x, y, e)
+      this._emitDragging('dragging', x, y, e)
     })
 
     const endDrag = (e: MouseEvent) => {
-      if (!this.isDragging) return
-      if (!this._rect) {
-        throw new Error('application bug', { cause: 'DND_RECT_NOT_SET' })
-      }
+      if (this.interactionMode !== 'drag' || !this._rect) return
       const x = e.clientX - this._rect.left
       const y = e.clientY - this._rect.top
-      this.isDragging = false
+      // Emit end *before* resetting mode
+      this._emitDragging('end', x, y, e)
+      this.interactionMode = null
       this._rect = undefined
-      this._emit('end', x, y, e)
     }
-
     window.addEventListener('mouseup', endDrag)
-    // this._el.addEventListener('mouseleave', endDrag)
   }
 
-  // Touch support
   private _initTouchListeners() {
     this._el.addEventListener(
       'touchstart',
       (e) => {
-        if (e.touches.length !== 1) return
+        e.preventDefault()
+
         this._rect = this._el.getBoundingClientRect()
-        const touch = e.touches[0]
-        this.startX = touch.clientX - this._rect.left
-        this.startY = touch.clientY - this._rect.right
-        // ;[this.startX, this.startY] = this._applyTranslate(
-        //   'before',
-        //   touch.clientX - this._rect.left,
-        //   touch.clientY - this._rect.top
-        // )
-        this.isDragging = true
-        this._emit('before', 0, 0, e)
+        if (!this._rect) return
+
+        const touchCount = e.touches.length
+        const [touch1, touch2] = e.touches
+        if (this.interactionMode === null) {
+          if (touchCount === 1) {
+            this.interactionMode = 'drag'
+            this.startX = touch1.clientX - this._rect.left
+            this.startY = touch1.clientY - this._rect.top
+            this._emitDragging('before', 0, 0, e)
+          } else if (touchCount === 2) {
+            console.log('Touch Start: Zoom')
+            this.interactionMode = 'zoom'
+            this.initialDistance = this._getTouchDistance(touch1, touch2)
+            this._emitZoomStart(e)
+          }
+        } else if (this.interactionMode === 'drag') {
+          if (touchCount === 2) {
+            this.interactionMode = 'zoom'
+            this.initialDistance = this._getTouchDistance(touch1, touch2)
+            this._emitZoomStart(e)
+          }
+        } else if (this.interactionMode === 'zoom') {
+        }
       },
       { passive: false }
     )
@@ -138,21 +204,64 @@ export class DndContext {
     window.addEventListener(
       'touchmove',
       (e) => {
-        if (!this.isDragging || e.touches.length !== 1) return
-        if (!this._rect) {
-          throw new Error('application bug', { cause: 'DND_RECT_NOT_SET' })
+        if (this.interactionMode === null || !this._rect) return
+        e.preventDefault()
+        const { length } = e.touches
+        const [touch1, touch2] = e.touches
+        if (this.interactionMode === 'drag' && length === 1) {
+          // --- Drag Move ---
+          const x = touch1.clientX - this._rect.left
+          const y = touch1.clientY - this._rect.top
+          this._emitDragging('dragging', x, y, e)
+        } else if (this.interactionMode === 'zoom' && length === 2) {
+          // --- Zoom Move ---
+          const currentDistance = this._getTouchDistance(touch1, touch2)
+          const center = this._getTouchCenter(touch1, touch2)
+          if (this.initialDistance > 0) {
+            const scale = currentDistance / this.initialDistance
+            this._emitZooming(
+              scale,
+              center.x - this._rect.left,
+              center.y - this._rect.top,
+              e
+            )
+          }
         }
-        const touch = e.touches[0]
-        this._emit('dragging', touch.clientX, touch.clientY, e)
       },
       { passive: false }
     )
 
     const endTouch = (e: TouchEvent) => {
-      if (!this.isDragging) return
-      const touch = e.changedTouches[0]
-      this.isDragging = false
-      this._emit('end', touch.clientX, touch.clientY, e)
+      const remainingTouches = e.touches.length
+      const liftedTouch = e.changedTouches[0]
+
+      if (this.interactionMode === 'drag') {
+        if (remainingTouches === 0) {
+          if (!this._rect) {
+            console.error('DndContext Error: Rect not set at touch end (drag).')
+            this.interactionMode = null // Reset state
+            return
+          }
+          if (liftedTouch) {
+            const x = liftedTouch.clientX - this._rect.left
+            const y = liftedTouch.clientY - this._rect.top
+            this._emitDragging('end', x, y, e)
+          } else {
+            this._emitDragging('end', 0, 0, e)
+          }
+          this.interactionMode = null
+          this._rect = undefined
+          this.initialDistance = 0
+        }
+      } else if (this.interactionMode === 'zoom') {
+        if (remainingTouches < 2) {
+          console.log('Touch End: Ending Zoom')
+          this._emitZoomEnd(e)
+          this.interactionMode = remainingTouches === 1 ? 'drag' : null
+          this._rect = remainingTouches === 0 ? undefined : this._rect
+          this.initialDistance = 0
+        }
+      }
     }
 
     window.addEventListener('touchend', endTouch, { passive: false })

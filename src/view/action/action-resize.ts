@@ -14,7 +14,7 @@ export class ResizeAction extends AbstractAction {
   bindTo(container: HTMLElement): void {
     super.bindTo(container)
     this._ctx.op.eventBus.subscribe('open', () => {
-      console.log('[done]')
+      this._ctx.op.hideeModal()
     })
   }
 

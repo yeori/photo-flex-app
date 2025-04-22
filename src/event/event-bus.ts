@@ -5,12 +5,14 @@ import {
   ZoomEvent,
   ImageOpenEvent,
   PhotoFlexEvent,
+  ViewportEvent,
 } from '.'
 
 type PhotoFlexEventMap = {
   zoom: ZoomEvent
   move: MoveEvent
   open: ImageOpenEvent
+  'viewport:resize': ViewportEvent
 }
 
 // type EventName = keyof PhotoFlexEventMap

@@ -11,6 +11,11 @@ export type ImageOpenEvent = {
   image: ImageSource
   ratio: number
 }
+export type ViewportEvent = {
+  width: number
+  height: number
+  image: ImageSource
+}
 /**
  * PhotoFlex event list
  * ```
@@ -19,6 +24,6 @@ export type ImageOpenEvent = {
  * open - a new image opened
  * ```
  */
-export type PhotoFlexEvent = 'zoom' | 'move' | 'open'
+export type PhotoFlexEvent = 'zoom' | 'move' | 'open' | 'viewport:resize'
 export type Unsubscriber = () => void
 export { EventBus } from './event-bus'
