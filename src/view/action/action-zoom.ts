@@ -1,5 +1,4 @@
-import { IAction } from '.'
-import { ActionParam } from '../..'
+import { IAction, ActionParam } from '../../types'
 import { ImageOpenEvent, Unsubscriber } from '../../event'
 import { PhotoFlexContext } from '../../photo-flex-context'
 import { dom } from '../../util'
@@ -11,7 +10,7 @@ export class ZoomAction implements IAction {
 
   constructor(private readonly _ctx: PhotoFlexContext) {
     this._param = {
-      id: 'action:zoom',
+      id: 'zoom',
       label: 'zoom',
     }
     this._el = dom.create<HTMLDivElement>('div')

@@ -1,7 +1,7 @@
-import { IRenderer, PhotoFlexInitParam } from '.'
+import { PhotoFlexInitParam } from './types'
 import { DndContext } from './dnd/dnd-context'
 import { ImageSource } from './image-source'
-import { ScaleMode, Viewport, type Point } from './scale'
+import { type ScaleMode, type Viewport, type Point } from './scale'
 import { dom } from './util'
 import { raitioResolvers as ratioResolvers } from './scale'
 import { GridRenderer } from './rendering/grid-renderer'
@@ -17,13 +17,29 @@ import { PhotoFlexContext } from './photo-flex-context'
 import { CanvasRenderer } from './rendering/canvas-view'
 import { ModalUI } from './component/modal-ui'
 import { ZoomByPinch } from './dnd/zoom-by-pinch'
+import { IRenderer } from './rendering'
 
 const DefaultInit: Required<PhotoFlexInitParam> = {
   width: '400px',
   height: '400px',
   zoom: 'contain',
   wheelSensitivity: 0.002,
-  actions: ['move', 'resize', 'zoom', 'fit-cover', 'fit-contain'],
+  actions: [
+    'move',
+    {
+      id: 'resize',
+      label: 'Resize',
+      options: [
+        { width: 320, height: 320 },
+        { width: 480, height: 480 },
+        { width: 640, height: 640 },
+      ],
+    },
+    'zoom',
+    'fit-cover',
+    'fit-contain',
+    'fit-real',
+  ],
   classnames: {
     prefix: 'photoflex',
     board: 'board',
@@ -96,7 +112,7 @@ export class PhotoFlex implements Viewport {
     this._wheelControl = new WheelController(this._photoFlexContext)
     this._wheelControl.bindTo(this._boardEl)
     this._dnd.addDragListener(new ImageDragger(this))
-    this._dnd.addZoomListener(new ZoomByPinch(this))
+    this._dnd.addPinchListener(new ZoomByPinch(this))
 
     this.installUI(el)
   }
@@ -178,7 +194,7 @@ export class PhotoFlex implements Viewport {
       ? (this._param.zoom as number)
       : ratioResolvers[scaleMode](source, this)
   }
-  async setImage(file: File) {
+  async setImage(file: File, clear: boolean = true): Promise<void> {
     const source = await ImageSource.fromFile(file)
     const ratio: number = this._calculateRatio(source)
     const origin = { x: 0, y: 0 }
@@ -188,6 +204,9 @@ export class PhotoFlex implements Viewport {
       origin,
       ratio
     )
+    if (clear) {
+      this._canvasView.removeLayers()
+    }
     this._canvasView.addLayer(layer)
     this.repaint()
     this._eventBus.emit('open', {
@@ -224,6 +243,16 @@ export class PhotoFlex implements Viewport {
     })
     this.repaint()
   }
+  fitToRealSize(): void {
+    this._canvasView.getLayers().forEach((layer) => {
+      layer.setRatio(1)
+      layer.setOrigin(0, 0)
+    })
+    this.repaint()
+  }
+  dispose() {
+    this._dnd.release()
+  }
   /**
    * capture current viewport
    */
@@ -234,4 +263,12 @@ export class PhotoFlex implements Viewport {
     link.download = name
     link.click()
   }
+  static init(el: HTMLElement, param?: PhotoFlexInitParam): IPhotoFlexOp {
+    const flex = new PhotoFlex(el, param)
+    return flex.operator
+  }
 }
+export * from './types'
+export * from './rendering'
+export { ImageLayer, ImageSource, IPhotoFlexOp, ScaleMode, Viewport, Point }
+export * from './event'

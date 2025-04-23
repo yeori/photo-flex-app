@@ -7,9 +7,15 @@ export class DimensionSelector extends HTMLElement {
     { width: 640, height: 640 },
   ]
 
-  constructor(readonly ctx: PhotoFlexContext) {
+  constructor(
+    readonly ctx: PhotoFlexContext,
+    dimensions?: { width: number; height: number }[]
+  ) {
     super()
     this.attachShadow({ mode: 'open' })
+    if (dimensions) {
+      this.dimensions = dimensions
+    }
     this.render()
   }
 

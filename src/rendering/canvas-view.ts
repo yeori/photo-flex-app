@@ -22,12 +22,12 @@ export class CanvasRenderer implements IRenderer {
    * Constructor for CanvasRenderer.
    * @param boardEl
    * @param pixelRatio
-   * @_param _param
+   * @param _context
    */
   constructor(
     private boardEl: HTMLDivElement,
     private _pixelRatio: number,
-    private readonly _context: PhotoFlexContext // private readonly _param: PhotoFlexInitParam
+    private readonly _context: PhotoFlexContext
   ) {
     const { prefix, canvas } = this._context.param.classnames!
     this._canvas = dom.create<HTMLCanvasElement>(
@@ -81,6 +81,9 @@ export class CanvasRenderer implements IRenderer {
 
   getLayers(): ImageLayer[] {
     return this.layers
+  }
+  removeLayers() {
+    this.layers = []
   }
 
   getFirstLayer(): ImageLayer | undefined {

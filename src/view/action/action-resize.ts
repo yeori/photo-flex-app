@@ -4,8 +4,11 @@ import { PhotoFlexContext } from '../../photo-flex-context'
 import { dom } from '../../util'
 
 export class ResizeAction extends AbstractAction {
-  constructor(private readonly _ctx: PhotoFlexContext) {
-    super({ id: 'action:resize', label: 'Resize' })
+  constructor(
+    private readonly _ctx: PhotoFlexContext,
+    private options?: { width: number; height: number }[]
+  ) {
+    super({ id: 'resize', label: 'Resize' })
   }
   protected createElement(): HTMLElement {
     return dom.create('button')
@@ -19,6 +22,6 @@ export class ResizeAction extends AbstractAction {
   }
 
   run(): void {
-    this._ctx.op.showModal(new DimensionSelector(this._ctx))
+    this._ctx.op.showModal(new DimensionSelector(this._ctx, this.options))
   }
 }

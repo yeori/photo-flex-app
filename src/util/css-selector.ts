@@ -1,4 +1,4 @@
-import { CssSelector } from '..'
+import { CssSelector } from '../types'
 
 export type DomAttr = {
   tag: string
@@ -26,7 +26,6 @@ export const parseCssSelector = (selector: CssSelector): DomAttr => {
   const classMatches = [...selector.matchAll(/\.([\w-]+)/g)]
   const classList = classMatches.map((m) => m[1])
 
-  console.log(selector, 'tag:', tag)
   if (tag) {
     ret.tag = tag
   }

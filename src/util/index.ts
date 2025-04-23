@@ -1,4 +1,4 @@
-import { CssSelector } from '..'
+import { CssSelector } from '../types'
 import { parseCssSelector } from './css-selector'
 import { EventUtil } from './event-util'
 const PRIMITIVES = 'number,string,boolean'.split(',')

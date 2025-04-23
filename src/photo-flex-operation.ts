@@ -2,17 +2,46 @@ import { type EventBus } from './event/event-bus'
 import { PhotoFlex } from './photo-flex'
 
 export interface IPhotoFlexOp {
-  hideeModal(): void
-  resizeViewport(width: number, height: number): void
-  updateZoomBy(zoomDelta: number): void
+  /**
+   * The event bus used for communication between different components.
+   */
   eventBus: EventBus
+  /**
+   * The current zoom level of the photo.
+   */
   currentZoom: number
-  hello(): void
+  /**
+   * Resizes the viewport to the specified width and height.
+   * @param width The new width of the viewport.
+   * @param height The new height of the viewport.
+   */
+  resizeViewport(width: number, height: number): void
+  /**
+   * Updates the zoom level by the specified delta.
+   * @param zoomDelta The amount to change the zoom level by.
+   */
+  updateZoomBy(zoomDelta: number): void
+  /**
+   * Sets the zoom level to the specified value.
+   * @param zoomLevel The new zoom level.
+   */
   setZoom(zoomLevel: number): void
+  /**
+   * Shows a modal element.
+   * @param elem The HTML element to show as a modal.
+   */
   showModal(elem: HTMLElement): void
+  /**
+   * Hides the modal.
+   */
   hideeModal(): void
+  /** Fits the photo to cover the entire viewport. */
   fitByCover(): void
+  /** Fits the photo within the viewport without cropping. */
   fitByContain(): void
+  /** Sets the zoom level to the photo's original size. */
+  fitToRealSize(): void
+  openImage(file: File): Promise<void>
 }
 
 export class PhotoFlexOp implements IPhotoFlexOp {
@@ -28,9 +57,6 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   }
   resizeViewport(width: number, height: number): void {
     this.target.resizeViewport(width, height)
-  }
-  hello(): void {
-    console.log('hello')
   }
   setZoom(zoomLevel: number): void {
     const { target } = this
@@ -53,5 +79,11 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   }
   fitByContain(): void {
     this.target.fitBy('contain')
+  }
+  fitToRealSize(): void {
+    this.target.fitToRealSize()
+  }
+  openImage(file: File): Promise<void> {
+    return this.target.setImage(file)
   }
 }

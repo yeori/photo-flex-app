@@ -17,32 +17,77 @@ export interface DragEvent {
    */
   sy: number
   /**
-   * The delta x coordinate of the drag.
+   * The delta x of the drag.
    */
   dx: number
   /**
-   * The delta y coordinate of the drag.
+   * The delta y of the drag.
    */
   dy: number
   /** The original mouse(touch) event */
   originalEvent: MouseEvent | TouchEvent
 }
 
+/**
+ * Interface for drag listener
+ */
 export interface DragListener {
-  before(e: DragEvent): void
-  dragging(e: DragEvent): void
-  end(e: DragEvent): void
+  /**
+   * Callback when drag start
+   * @param e
+   */
+  before?(e: DragEvent): void
+  /**
+   * Callback when dragging
+   * @param e
+   */
+  dragging?(e: DragEvent): void
+  /**
+   * Callback when drag end
+   * @param e
+   */
+  end?(e: DragEvent): void
 }
 
-export interface ZoomEvent {
+/**
+ * Interface for pinch events.
+ */
+export interface PinchEvent {
+  /**
+   * The current scale of the zoom.
+   */
   scale: number
+  /**
+   * The center x coordinate of the zoom.
+   */
   centerX: number
+  /**
+   * The center y coordinate of the zoom.
+   */
   centerY: number
+  /**
+   * The original touch event
+   */
   originalEvent: TouchEvent
 }
 
-export interface ZoomListener {
-  before?(e: TouchEvent): void
-  zooming(e: ZoomEvent): void
-  end?(e: TouchEvent): void
+/**
+ * Interface for zoom listener.
+ */
+export interface PinchListener {
+  /**
+   * Callback before zooming.
+   * @param e - The touch event.
+   */
+  before?(e: PinchEvent): void
+  /**
+   * Callback while zooming.
+   * @param e - The zoom event.
+   */
+  zooming?(e: PinchEvent): void
+  /**
+   * Callback when zooming end.
+   * @param e - The touch event.\
+   */
+  end?(e: PinchEvent): void
 }

@@ -1,6 +1,6 @@
-import { IAction } from '.'
-import { ActionDefinition } from '../..'
+import { IAction } from '../../types'
 import { PhotoFlexContext } from '../../photo-flex-context'
+import { ActionDefinition, ActionResizeParam } from '../../types'
 import { dom } from '../../util'
 import { ActionFitCover } from './action-fit-scale'
 import { ActionMove } from './action-move'
@@ -27,11 +27,12 @@ export class ActionFactory {
     this._addToMap(new ZoomAction(this._ctx))
     this._addToMap(new ActionFitCover(this._ctx, 'cover'))
     this._addToMap(new ActionFitCover(this._ctx, 'contain'))
+    this._addToMap(new ActionFitCover(this._ctx, 'real'))
   }
   installActions(params: ActionDefinition[]) {
     params.forEach((param) => {
       if (typeof param === 'string') {
-        const id = `action:${param}`
+        const id = `${param}`
         const action = this._defaultActions.get(id)
         if (action) {
           this.installAction(action)
@@ -40,8 +41,10 @@ export class ActionFactory {
             cause: 'ACTION_ID_NOT_FOUND',
           })
         }
-      } else {
-        console.log('[action]', param)
+      } else if (param.id === 'resize') {
+        const { options } = param as ActionResizeParam
+        const action = new ResizeAction(this._ctx, options)
+        this.installAction(action)
       }
     })
   }

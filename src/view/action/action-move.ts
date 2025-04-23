@@ -1,11 +1,11 @@
 import { AbstractAction } from '.'
-import { PhotoFlexContext } from '../../photo-flex-context'
+import type { PhotoFlexContext } from '../../photo-flex-context'
 
 export class ActionMove extends AbstractAction {
-  constructor(private readonly _ctx: PhotoFlexContext) {
-    super({ id: 'action:move', label: 'Move' })
+  constructor(_: PhotoFlexContext) {
+    super({ id: 'move', label: 'Move' })
   }
   run(): void {
-    this._ctx.op.hello()
+    console.log('hello')
   }
 }

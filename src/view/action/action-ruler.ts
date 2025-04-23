@@ -1,6 +1,6 @@
-import { IAction } from '.'
-import { ActionParam } from '../..'
+import { IAction } from '../../types'
 import { PhotoFlexContext } from '../../photo-flex-context'
+import { ActionParam } from '../../types'
 import { dom } from '../../util'
 
 export class RulerAction implements IAction {

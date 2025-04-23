@@ -2,9 +2,21 @@ import type {
   DndState,
   DragListener,
   DragEvent,
-  ZoomListener,
-  ZoomEvent,
+  PinchListener,
+  PinchEvent,
 } from '.'
+import { DragState } from './state/drag-state'
+import { IdleState } from './state/idle-state'
+import { PinchState } from './state/pinch-state'
+
+export interface TouchStateHandler {
+  name: string
+  touchStart(event: TouchEvent): void
+  touchMove(event: TouchEvent): void
+  touchEnd(event: TouchEvent): void
+}
+
+export type TouchState = 'idle' | 'drag' | 'pinch'
 
 export type DndInitParam = {
   translate?: (
@@ -18,107 +30,207 @@ const DefaultDndParam: Required<DndInitParam> = {
   translate: (_, x, y) => ({ x, y }),
 }
 export class DndContext {
-  private _el: HTMLElement
-  private interactionMode: 'drag' | 'zoom' | null = null
-  private startX = 0
-  private startY = 0
-  private initialDistance = 0
+  private _el: HTMLElement | undefined
   private dragListeners: DragListener[] = []
-  private zoomListeners: ZoomListener[] = []
-  private _rect: DOMRect | undefined
+  private zoomListeners: PinchListener[] = []
   private _param: Required<DndInitParam>
+
+  private currentState: TouchStateHandler
+  public _rect: DOMRect | undefined
+  public startX = 0
+  public startY = 0
+  public initialDistance = 0
+  private _stateMap: Map<TouchState, TouchStateHandler> = new Map()
+  private _pinchEvent: PinchEvent | undefined
+  private _dragEvent: DragEvent | undefined
+  private unsubs: (() => void)[] = []
 
   constructor(el: HTMLElement, param?: DndInitParam) {
     this._el = el
     this._param = (param as Required<DndInitParam>) || DefaultDndParam
-    this._initMouseListeners()
-    this._initTouchListeners() // Will call the updated version
+    this._stateMap.set('idle', new IdleState(this))
+    this._stateMap.set('drag', new DragState(this))
+    this._stateMap.set('pinch', new PinchState(this))
+    this.currentState = this.setState('idle')
+
+    this.unsubs.push(this._initMouseListeners(el), this._initTouchListeners(el))
+  }
+  private get pinchEvent(): PinchEvent {
+    if (!this._pinchEvent) {
+      throw new Error('pinch event not set')
+    }
+    return this._pinchEvent
+  }
+  public setState(state: TouchState, event?: TouchEvent): TouchStateHandler {
+    const handler = this._stateMap.get(state)
+    if (!handler) {
+      throw new Error('check the state: ' + state)
+    }
+    const { currentState } = this
+    if (handler === currentState) {
+      return handler
+    }
+    if (event) {
+      handler.touchStart(event)
+    }
+    this.currentState = handler
+    return handler
+  }
+
+  public hasRect(): boolean {
+    return !!this._rect
+  }
+  public getRect(): DOMRect {
+    const { _rect } = this
+    if (!_rect) {
+      throw new Error('no DOMRect caputured')
+    }
+    return _rect
+  }
+
+  public updateRect(): DOMRect {
+    if (!this._el) {
+      throw new Error('no element to capture')
+    }
+    return (this._rect = this._el.getBoundingClientRect())
+  }
+  captureStart(event: TouchEvent | MouseEvent) {
+    let clientX = 0
+    let clientY = 0
+    if (event instanceof TouchEvent) {
+      const [touch] = event.touches
+      if (!touch) {
+        console.error('DragState: Invalid state on entry.')
+        this.resetInteraction()
+        this.setState('idle')
+        return
+      }
+      clientX = touch.clientX
+      clientY = touch.clientY
+    } else if (event instanceof MouseEvent) {
+      clientX = event.clientX
+      clientY = event.clientY
+    }
+
+    const rect = this.updateRect()
+
+    this.startX = clientX - rect.left
+    this.startY = clientY - rect.top
+  }
+  public resetInteraction(): void {
+    this._rect = undefined
+    this.startX = 0
+    this.startY = 0
+    this.initialDistance = 0
+    this.setState('idle')
+  }
+
+  public _emitDragging(
+    state: DndState,
+    x: number,
+    y: number,
+    e: MouseEvent | TouchEvent
+  ): void {
+    const dx = x - this.startX
+    const dy = y - this.startY
+
+    if (state === 'before') {
+      const { x: sx, y: sy } = this._param.translate(
+        state,
+        this.startX,
+        this.startY
+      )
+      this._dragEvent = {
+        dx,
+        dy,
+        sx,
+        sy,
+        state: 'before',
+        originalEvent: e,
+      }
+    }
+    const { _dragEvent: evt } = this
+    if (!evt) {
+      console.error('DragState: Invalid state on entry.')
+      this.resetInteraction()
+      return
+    }
+    evt.dx = dx
+    evt.dy = dy
+    const event: DragEvent = Object.freeze<DragEvent>(
+      Object.assign({}, this._dragEvent)
+    )
+    for (const listener of this.dragListeners) {
+      if (state === 'before') listener.before?.(event)
+      else if (state === 'dragging') listener.dragging?.(event)
+      else if (state === 'end') listener.end?.(event)
+    }
+    if (state === 'end') {
+      this._dragEvent = undefined
+    }
+  }
+
+  public emitPinchStart(e: TouchEvent): void {
+    this.updateRect()
+    const [touch1, touch2] = e.touches
+    this.initialDistance = this._getTouchDistance(touch1, touch2)
+    const center = this._getTouchCenter(touch1, touch2)
+    const rect = this.getRect()
+    this._pinchEvent = {
+      scale: 1,
+      centerX: center.x - rect.left,
+      centerY: (center.y = rect.top),
+      originalEvent: e,
+    }
+    const event: PinchEvent = Object.freeze<PinchEvent>(
+      Object.assign({}, this._pinchEvent)
+    )
+    for (const listener of this.zoomListeners) {
+      listener.before?.(event)
+    }
+  }
+
+  public emitPinching(e: TouchEvent): void {
+    if (this.currentState.name !== 'pinch') {
+      console.warn(
+        `_emitZooming called in unexpected state: ${this.currentState.constructor.name}`
+      )
+      return
+    }
+    const { pinchEvent, initialDistance } = this
+    const rect = this.getRect()
+
+    const [touch1, touch2] = e.touches
+    const dist = this._getTouchDistance(touch1, touch2)
+    const center = this._getTouchCenter(touch1, touch2)
+    const scale = dist / initialDistance
+    pinchEvent.scale = scale
+    pinchEvent.centerX = center.x - rect.left
+    pinchEvent.centerY = center.y = rect.top
+    pinchEvent.originalEvent = e
+    const event: PinchEvent = Object.freeze<PinchEvent>(
+      Object.assign({}, pinchEvent)
+    )
+    for (const listener of this.zoomListeners) {
+      listener.zooming?.(event)
+    }
+  }
+
+  public emitPinchEnd(e: TouchEvent): void {
+    const { pinchEvent } = this
+    pinchEvent.originalEvent = e
+    const event: PinchEvent = Object.freeze<PinchEvent>(pinchEvent)
+    for (const listener of this.zoomListeners) {
+      listener.end?.(event)
+    }
+    this._pinchEvent = undefined
   }
 
   addDragListener(listener: DragListener) {
     this.dragListeners.push(listener)
   }
-
-  // Add method to add zoom listeners
-  addZoomListener(listener: ZoomListener) {
+  addPinchListener(listener: PinchListener) {
     this.zoomListeners.push(listener)
-  }
-
-  /**
-   * called for mouse* event and single touch event (dragging)
-   */
-  private _emitDragging(
-    state: DndState,
-    clientX: number,
-    clientY: number,
-    originalEvent: MouseEvent | TouchEvent
-  ) {
-    if (this.interactionMode !== 'drag' && state !== 'before') return
-    if (this.interactionMode === 'zoom' && state === 'before') return
-
-    const dx = clientX - this.startX
-    const dy = clientY - this.startY
-    const { x: sx, y: sy } = this._param.translate(
-      state,
-      this.startX,
-      this.startY
-    )
-    const event: DragEvent = Object.freeze<DragEvent>({
-      state,
-      dx,
-      dy,
-      sx,
-      sy,
-      originalEvent,
-    })
-
-    if (this.interactionMode === 'drag') {
-      for (const listener of this.dragListeners) {
-        if (state === 'before') {
-          listener.before(event)
-        } else if (state === 'dragging') {
-          listener.dragging(event)
-        } else if (state === 'end') {
-          listener.end(event)
-        }
-      }
-    }
-  }
-
-  private _emitZooming(
-    scale: number,
-    centerX: number,
-    centerY: number,
-    originalEvent: TouchEvent
-  ) {
-    if (this.interactionMode !== 'zoom') return
-
-    const event: ZoomEvent = Object.freeze({
-      scale,
-      centerX,
-      centerY,
-      originalEvent,
-    })
-    for (const listener of this.zoomListeners) {
-      listener.zooming(event)
-    }
-  }
-
-  private _emitZoomStart(originalEvent: TouchEvent) {
-    if (this.interactionMode !== 'zoom') return
-    console.log('Emitting Zoom Start')
-    for (const listener of this.zoomListeners) {
-      listener.before?.(originalEvent)
-    }
-  }
-
-  private _emitZoomEnd(originalEvent: TouchEvent) {
-    const wasZooming = this.interactionMode === 'zoom'
-    if (!wasZooming) return
-    console.log('Emitting Zoom End')
-    for (const listener of this.zoomListeners) {
-      listener.end?.(originalEvent)
-    }
   }
 
   private _getTouchDistance(touch1: Touch, touch2: Touch): number {
@@ -137,134 +249,77 @@ export class DndContext {
     }
   }
 
-  private _initMouseListeners() {
-    this._el.addEventListener('mousedown', (e) => {
-      if (this.interactionMode !== null) return
-      this._rect = this._el.getBoundingClientRect()
-      this.startX = e.clientX - this._rect.left
-      this.startY = e.clientY - this._rect.top
-      this.interactionMode = 'drag'
+  private _initMouseListeners(el: HTMLElement): () => void {
+    const startHandler = (e: MouseEvent) => {
+      this.captureStart(e)
       this._emitDragging('before', 0, 0, e)
-    })
-
-    window.addEventListener('mousemove', (e) => {
-      if (this.interactionMode !== 'drag' || !this._rect) return
-      const x = e.clientX - this._rect.left
-      const y = e.clientY - this._rect.top
-      this._emitDragging('dragging', x, y, e)
-    })
-
-    const endDrag = (e: MouseEvent) => {
-      if (this.interactionMode !== 'drag' || !this._rect) return
-      const x = e.clientX - this._rect.left
-      const y = e.clientY - this._rect.top
-      // Emit end *before* resetting mode
-      this._emitDragging('end', x, y, e)
-      this.interactionMode = null
-      this._rect = undefined
     }
-    window.addEventListener('mouseup', endDrag)
+    const moveHandler = (e: MouseEvent) => {
+      if (!this._dragEvent) {
+        return
+      }
+      const rect = this.getRect()
+      const currentX = e.clientX - rect.left
+      const currentY = e.clientY - rect.top
+      this._emitDragging('dragging', currentX, currentY, e)
+    }
+    const endHandler = (e: MouseEvent) => {
+      if (!this._dragEvent) {
+        return
+      }
+      const rect = this.getRect()
+      const endX = e.clientX - rect.left
+      const endY = e.clientY - rect.top
+      this._emitDragging('end', endX, endY, e)
+      this.resetInteraction()
+    }
+    el.addEventListener('mousedown', startHandler)
+    window.addEventListener('mousemove', moveHandler)
+    window.addEventListener('mouseup', endHandler)
+    return () => {
+      el.removeEventListener('mousedown', startHandler)
+      window.removeEventListener('mousemove', moveHandler)
+      window.removeEventListener('mouseup', endHandler)
+    }
   }
 
-  private _initTouchListeners() {
-    this._el.addEventListener(
-      'touchstart',
-      (e) => {
+  private _initTouchListeners(el: HTMLElement): () => void {
+    const startHandler = (e: TouchEvent) => {
+      e.preventDefault()
+      this.currentState.touchStart(e)
+    }
+    const moveHandler = (e: TouchEvent) => {
+      if (!(this.currentState instanceof IdleState)) {
         e.preventDefault()
-
-        this._rect = this._el.getBoundingClientRect()
-        if (!this._rect) return
-
-        const touchCount = e.touches.length
-        const [touch1, touch2] = e.touches
-        if (this.interactionMode === null) {
-          if (touchCount === 1) {
-            this.interactionMode = 'drag'
-            this.startX = touch1.clientX - this._rect.left
-            this.startY = touch1.clientY - this._rect.top
-            this._emitDragging('before', 0, 0, e)
-          } else if (touchCount === 2) {
-            console.log('Touch Start: Zoom')
-            this.interactionMode = 'zoom'
-            this.initialDistance = this._getTouchDistance(touch1, touch2)
-            this._emitZoomStart(e)
-          }
-        } else if (this.interactionMode === 'drag') {
-          if (touchCount === 2) {
-            this.interactionMode = 'zoom'
-            this.initialDistance = this._getTouchDistance(touch1, touch2)
-            this._emitZoomStart(e)
-          }
-        } else if (this.interactionMode === 'zoom') {
-        }
-      },
-      { passive: false }
-    )
-
-    window.addEventListener(
-      'touchmove',
-      (e) => {
-        if (this.interactionMode === null || !this._rect) return
-        e.preventDefault()
-        const { length } = e.touches
-        const [touch1, touch2] = e.touches
-        if (this.interactionMode === 'drag' && length === 1) {
-          // --- Drag Move ---
-          const x = touch1.clientX - this._rect.left
-          const y = touch1.clientY - this._rect.top
-          this._emitDragging('dragging', x, y, e)
-        } else if (this.interactionMode === 'zoom' && length === 2) {
-          // --- Zoom Move ---
-          const currentDistance = this._getTouchDistance(touch1, touch2)
-          const center = this._getTouchCenter(touch1, touch2)
-          if (this.initialDistance > 0) {
-            const scale = currentDistance / this.initialDistance
-            this._emitZooming(
-              scale,
-              center.x - this._rect.left,
-              center.y - this._rect.top,
-              e
-            )
-          }
-        }
-      },
-      { passive: false }
-    )
-
-    const endTouch = (e: TouchEvent) => {
-      const remainingTouches = e.touches.length
-      const liftedTouch = e.changedTouches[0]
-
-      if (this.interactionMode === 'drag') {
-        if (remainingTouches === 0) {
-          if (!this._rect) {
-            console.error('DndContext Error: Rect not set at touch end (drag).')
-            this.interactionMode = null // Reset state
-            return
-          }
-          if (liftedTouch) {
-            const x = liftedTouch.clientX - this._rect.left
-            const y = liftedTouch.clientY - this._rect.top
-            this._emitDragging('end', x, y, e)
-          } else {
-            this._emitDragging('end', 0, 0, e)
-          }
-          this.interactionMode = null
-          this._rect = undefined
-          this.initialDistance = 0
-        }
-      } else if (this.interactionMode === 'zoom') {
-        if (remainingTouches < 2) {
-          console.log('Touch End: Ending Zoom')
-          this._emitZoomEnd(e)
-          this.interactionMode = remainingTouches === 1 ? 'drag' : null
-          this._rect = remainingTouches === 0 ? undefined : this._rect
-          this.initialDistance = 0
-        }
+        this.currentState.touchMove(e)
       }
     }
-
-    window.addEventListener('touchend', endTouch, { passive: false })
-    window.addEventListener('touchcancel', endTouch, { passive: false })
+    const endHandler = (e: TouchEvent) => {
+      if (!(this.currentState instanceof IdleState)) {
+        this.currentState.touchEnd(e)
+      }
+    }
+    const options = { passive: false }
+    el.addEventListener('touchstart', startHandler, options)
+    window.addEventListener('touchmove', moveHandler, options)
+    window.addEventListener('touchend', endHandler, options)
+    window.addEventListener('touchcancel', endHandler, options)
+    return () => {
+      el.removeEventListener('touchstart', startHandler)
+      window.removeEventListener('touchmove', moveHandler)
+      window.removeEventListener('touchend', endHandler)
+      window.removeEventListener('touchcancel', endHandler)
+    }
+  }
+  public release() {
+    this._el = undefined
+    this.unsubs.forEach((unsub) => {
+      try {
+        unsub()
+      } catch (e) {
+        console.error('unsub error: ignore this error', e)
+      }
+    })
+    this.unsubs.splice(0, this.unsubs.length)
   }
 }

@@ -1,4 +1,5 @@
-import type { DataNameParam, EventBus, PhotoFlexInitParam } from '.'
+import type { DataNameParam, PhotoFlexInitParam } from './types'
+import { EventBus } from './event'
 import { IPhotoFlexOp } from './photo-flex-operation'
 import { Viewport } from './scale'
 import { dom } from './util'

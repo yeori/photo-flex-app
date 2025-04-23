@@ -8,7 +8,7 @@ export const mergeParam = <T extends {}>(base: T, user?: T): T => {
   if (!user) {
     return dom.deepClone(base)
   }
-  if (dom.isPrimitve(base) || dom.isFunction(base)) {
+  if (dom.isPrimitve(user) || dom.isFunction(user)) {
     return user
   }
   Object.keys(base).forEach((key) => {

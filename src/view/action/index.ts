@@ -1,17 +1,5 @@
-import { ActionParam } from '../..'
+import { ActionParam, IAction } from '../../types'
 import { dom } from '../../util'
-
-export interface IAction {
-  bindTo(_el: HTMLElement): void
-  id: string
-  label: string
-  element: HTMLElement
-  run(): void
-}
-// export type ActionInitParam = {
-//   id: string
-//   label: string
-// }
 export abstract class AbstractAction implements IAction {
   protected _el: HTMLElement
 

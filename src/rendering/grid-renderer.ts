@@ -1,4 +1,4 @@
-import { IRenderer } from '../'
+import { IRenderer } from '../rendering'
 import { PhotoFlexContext } from '../photo-flex-context'
 
 /**

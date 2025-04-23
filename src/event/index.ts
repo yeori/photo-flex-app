@@ -22,6 +22,7 @@ export type ViewportEvent = {
  * zoom - zool level changed
  * move - image moved
  * open - a new image opened
+ * viewport:resize - viewport(canvas) is resized
  * ```
  */
 export type PhotoFlexEvent = 'zoom' | 'move' | 'open' | 'viewport:resize'
