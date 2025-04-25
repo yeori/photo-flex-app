@@ -2,11 +2,13 @@ import { IAction } from '../../types'
 import { PhotoFlexContext } from '../../photo-flex-context'
 import { ActionParam } from '../../types'
 import { dom } from '../../util'
+import { Unsubscriber } from '../../event'
 
 export class RulerAction implements IAction {
   private _hRuler: HTMLElement
   private _vRuler: HTMLElement
   private _param: ActionParam
+  private _unsub: Unsubscriber | undefined
   constructor(private readonly _ctx: PhotoFlexContext) {
     this._param = {
       id: 'action:ruler',
@@ -32,11 +34,14 @@ export class RulerAction implements IAction {
   run(): void {}
   bindTo(container: HTMLElement) {
     dom.appends(container, this._hRuler, this._vRuler)
-    this._ctx.op.eventBus.subscribe('open', (paylod) => {
+    this._unsub = this._ctx.op.eventBus.subscribe('open', (paylod) => {
       const width = paylod.image.width
       const height = paylod.image.height
       dom.findOne(this._hRuler, '.label')!.innerText = `${width}`
       dom.findOne(this._vRuler, '.label')!.innerText = `${height}`
     })
+  }
+  dispose(): void {
+    this._unsub?.()
   }
 }

@@ -72,6 +72,16 @@ export class DomUtil {
     )
   }
   /**
+   * create HTMLElement and its descendants from the supplied html.
+   * @param html html to create elements
+   * @returns The first created HTMLElement or null if the html is empty or invalid.
+   */
+  createFromHtml<T extends HTMLElement = HTMLElement>(html: string): T {
+    const template = document.createElement('template')
+    template.innerHTML = html.trim()
+    return template.content.firstElementChild as T
+  }
+  /**
    * create an element from the css selector syntax. If parentEl is given, the new element will be appended to it.
    * @param selector css selector syntax
    * @param parentEl
@@ -106,10 +116,18 @@ export class DomUtil {
     }
     return elem
   }
-  appends<T extends Element>(container: T, ...elems: Element[]) {
+  /**
+   * append the elements to container.
+   *
+   * @returns unsubscriber - to remove the elements appended
+   */
+  appends<T extends Element>(container: T, ...elems: Element[]): () => void {
     elems.forEach((elem) => {
       container.appendChild(elem)
     })
+    return () => {
+      elems.forEach((elem) => container.removeChild(elem))
+    }
   }
   /**
    * remove the supplied element(s) from the DOM

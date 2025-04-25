@@ -4,6 +4,7 @@ export interface IAction {
   label: string
   element: HTMLElement
   run(): void
+  dispose?(): void
 }
 /**
  * css selector syntax to

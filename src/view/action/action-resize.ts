@@ -11,14 +11,16 @@ export class ResizeAction extends AbstractAction {
     super({ id: 'resize', label: 'Resize' })
   }
   protected createElement(): HTMLElement {
-    return dom.create('button')
-  }
-
-  bindTo(container: HTMLElement): void {
-    super.bindTo(container)
+    const btn =
+      dom.createFromHtml<HTMLButtonElement>(`<button data-photoflex-action title="Resize">
+  <span class="material-symbols-outlined">aspect_ratio</span>
+</button>`)
+    btn.disabled = true
     this._ctx.op.eventBus.subscribe('open', () => {
+      btn.disabled = false
       this._ctx.op.hideeModal()
     })
+    return btn
   }
 
   run(): void {

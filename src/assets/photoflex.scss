@@ -1,0 +1,115 @@
+[data-photoflex-root] {
+  position: relative;
+  background: #eee;
+  display: flex;
+  justify-content: center;
+  padding: 48px 0 16px;
+  overflow-x: hidden;
+  &.photoflex-drag-over {
+    border: 2px dashed #ccc;
+  }
+  [data-photoflex-board] {
+    position: relative;
+    display: grid;
+    &.ruler {
+      grid-template-columns: 16px 1fr;
+      grid-template-rows: 16px 1fr;
+      canvas {
+        grid-row: 2 / 3;
+        grid-column: 2 / 3;
+      }
+    }
+    canvas {
+      overscroll-behavior: none;
+      background: white;
+      box-shadow: 0 0 16px rgba(0, 0, 0, 0.4), 0 0 8px rgba(0, 0, 0, 0.2);
+    }
+  }
+}
+[data-photoflex-dropzone] {
+  border: 4px dashed #aaa;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  position: absolute;
+  z-index: 100;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ffffffdd;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+/* START: toolbar */
+[data-photoflex-toolbar] {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  width: 100%;
+  top: 4px;
+  display: flex;
+  column-gap: 4px;
+  align-items: center;
+}
+/* START: aciton */
+[data-photoflex-action] {
+  background-color: #007bff;
+  border: none;
+  color: white;
+  padding: 0.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease-in-out;
+  font-size: 1rem;
+  &:hover {
+    background-color: #0056b3;
+  }
+  &:disabled {
+    background-color: #a0c4ff;
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+  &:focus {
+    outline: 2px solid #007bffa0;
+  }
+  &:focus-visible {
+    outline: 2px solid #003873;
+  }
+  .material-icons,
+  .material-symbols-outlined {
+    font-size: 1rem;
+  }
+}
+
+/* START: ruler */
+[data-photoflex-ruler] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &.h {
+    grid-row: 1 / 2;
+    grid-column: 2 / 3;
+    & > .label {
+      transform: translateY(-6px);
+    }
+  }
+  &.v {
+    grid-row: 2 / 3;
+    grid-column: 1 / 2;
+    & > .label {
+      transform: translateX(-6px) rotate(-90deg);
+    }
+  }
+  .label {
+    padding: 4px 6px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+}

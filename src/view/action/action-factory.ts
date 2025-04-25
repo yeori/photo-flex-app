@@ -6,6 +6,7 @@ import { ActionFitCover } from './action-fit-scale'
 import { ActionMove } from './action-move'
 import { ResizeAction } from './action-resize'
 import { ZoomAction } from './action-zoom'
+import { OpenAction } from './action-open'
 
 export class ActionFactory {
   private _el: HTMLElement
@@ -22,6 +23,7 @@ export class ActionFactory {
     this._defaultActions.set(action.id, action)
   }
   private _installDefaultActions() {
+    this._addToMap(new OpenAction(this._ctx))
     this._addToMap(new ActionMove(this._ctx))
     this._addToMap(new ResizeAction(this._ctx))
     this._addToMap(new ZoomAction(this._ctx))
@@ -51,5 +53,10 @@ export class ActionFactory {
   installAction(action: IAction) {
     action.bindTo(this._el)
     this._actions.push(action)
+  }
+  dispose() {
+    this._actions.forEach((action) => {
+      action.dispose?.()
+    })
   }
 }

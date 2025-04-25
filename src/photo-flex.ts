@@ -1,3 +1,4 @@
+// Suggested code may be subject to a license. Learn more: ~LicenseLog:3840367711.
 import { PhotoFlexInitParam } from './types'
 import { DndContext } from './dnd/dnd-context'
 import { ImageSource } from './image-source'
@@ -25,7 +26,6 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
   zoom: 'contain',
   wheelSensitivity: 0.002,
   actions: [
-    'move',
     {
       id: 'resize',
       label: 'Resize',
@@ -115,6 +115,7 @@ export class PhotoFlex implements Viewport {
     this._dnd.addPinchListener(new ZoomByPinch(this))
 
     this.installUI(el)
+    this.bindDropdownListener(el)
   }
   get width() {
     return this._canvasView.width
@@ -148,6 +149,109 @@ export class PhotoFlex implements Viewport {
     const modal = new ModalUI(this._operator)
     modal.bindTo(container)
     this._modalUI = modal
+  }
+  /**
+   * handles drag event to catch and render dropped image file.
+   * @param el
+   */
+  private bindDropdownListener(el: HTMLElement) {
+    let unsub: (() => void) | undefined = undefined
+    const handleDragEnter = (event: DragEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+      console.log('[DRAG ENTER]', event.target)
+      const { target, currentTarget } = event
+      if (target !== currentTarget) {
+        console.log('skip')
+        return
+      }
+      // Check if the dragged items contain files
+      if (event.dataTransfer?.types.includes('Files')) {
+        const dropEl = dom.createFromHtml(
+          '<div data-photoflex-dropzone>Drop files here</div>'
+        )
+        dropEl.style.pointerEvents = 'none'
+        if (!unsub) {
+          unsub = dom.appends(el, dropEl)
+        }
+      }
+    }
+
+    const handleDragOver = (event: DragEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+      const { target, currentTarget } = event
+      if (target !== currentTarget) {
+        return
+      }
+      console.log('[DRAG OVER]')
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'copy'
+      }
+    }
+
+    const handleDragLeave = (event: DragEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+      const { target } = event
+      if (target !== el) {
+        return
+      }
+      console.log('[DRAG LEAVE]', target)
+
+      const relatedTarget = event.relatedTarget as Node | null
+      if (!relatedTarget || !el.contains(relatedTarget)) {
+        unsub?.()
+        unsub = undefined
+      }
+    }
+
+    const handleDrop = async (event: DragEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+
+      unsub?.()
+      unsub = undefined
+      console.log('[DROP]')
+
+      if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+        const file = event.dataTransfer.files[0]
+        console.log(`File dropped: ${file.name}, type: ${file.type}`)
+
+        if (file.type.startsWith('image/')) {
+          try {
+            this.operator.openImage(file)
+          } catch (error) {
+            console.error('Error opening dropped image:', error)
+          }
+        } else {
+          console.warn('Dropped file is not an image:', file.type)
+        }
+        event.dataTransfer.clearData()
+      } else {
+        console.log('No files found in drop event dataTransfer.')
+      }
+    }
+
+    // Attach listeners
+    el.addEventListener('dragenter', handleDragEnter)
+    el.addEventListener('dragover', handleDragOver)
+    el.addEventListener('dragleave', handleDragLeave)
+    el.addEventListener('drop', handleDrop)
+
+    console.log('Dropdown listeners bound to element:', el)
+
+    // Return a dispose function to remove listeners if needed
+    const dispose = () => {
+      el.removeEventListener('dragenter', handleDragEnter)
+      el.removeEventListener('dragover', handleDragOver)
+      el.removeEventListener('dragleave', handleDragLeave)
+      el.removeEventListener('drop', handleDrop)
+      unsub?.()
+      console.log('Dropdown listeners removed from element:', el)
+    }
+
+    return { dispose }
   }
 
   getLayers(): ImageLayer[] {
