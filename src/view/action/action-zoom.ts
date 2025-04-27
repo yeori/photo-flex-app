@@ -43,7 +43,7 @@ export class ZoomAction implements IAction {
   bindTo(container: HTMLElement): void {
     const { op } = this._ctx
     const input = dom.create<HTMLInputElement>(
-      'input[type=range][data-action="zoom"][min=0.1][max=4][step=0.1][value=1]',
+      'input.blue[type=range][data-action="zoom"][min=0.1][max=4][step=0.1][value=1]',
       this._el
     )
     input.ariaLabel = 'Scale image'

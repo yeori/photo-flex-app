@@ -73,13 +73,21 @@ export class DomUtil {
   }
   /**
    * create HTMLElement and its descendants from the supplied html.
-   * @param html html to create elements
+   * @param html - html to create elements
+   * @param container - parent element to append the created elements
    * @returns The first created HTMLElement or null if the html is empty or invalid.
    */
-  createFromHtml<T extends HTMLElement = HTMLElement>(html: string): T {
+  createFromHtml<T extends HTMLElement = HTMLElement>(
+    html: string,
+    container?: Element
+  ): T {
     const template = document.createElement('template')
     template.innerHTML = html.trim()
-    return template.content.firstElementChild as T
+    const elem = template.content.firstElementChild as T
+    if (container) {
+      container.appendChild(elem)
+    }
+    return elem
   }
   /**
    * create an element from the css selector syntax. If parentEl is given, the new element will be appended to it.
@@ -171,6 +179,13 @@ export class DomUtil {
         return part[0].toUpperCase() + part.substring(1)
       })
       .join('')
+  }
+  closest<T extends HTMLElement = HTMLElement>(el: T, selector: CssSelector) {
+    const ancestor = el.closest(selector) as T
+    if (!ancestor) {
+      throw new Error('no such ancestor: ' + selector)
+    }
+    return ancestor
   }
   /**
    * find an element, supplied element or null

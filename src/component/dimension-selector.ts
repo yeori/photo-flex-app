@@ -1,4 +1,5 @@
 import { PhotoFlexContext } from '../photo-flex-context'
+import { dom } from '../util'
 
 export class DimensionSelector extends HTMLElement {
   private dimensions = [
@@ -16,43 +17,98 @@ export class DimensionSelector extends HTMLElement {
     if (dimensions) {
       this.dimensions = dimensions
     }
-    this.render()
+    this.bindStyle()?.then(this.render.bind(this))
   }
+  private bindStyle() {
+    const { shadowRoot: root } = this
+    if (!root) {
+      return
+    }
+    const link0 = document.createElement('link')
+    const prm0 = new Promise((resolve) => {
+      link0.onload = resolve
+    })
+    link0.rel = 'stylesheet'
+    link0.href =
+      'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined'
+    root.appendChild(link0)
 
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    const prm1 = new Promise((resolve) => {
+      link.onload = resolve
+    })
+    link.href = '/photo-flex.css'
+    root.appendChild(link)
+    return Promise.all([prm0, prm1])
+  }
+  private _renderDimension(menu: HTMLMenuElement) {
+    dom.emptify(menu)
+    this.dimensions.forEach(({ width, height }, index) => {
+      dom.createFromHtml<HTMLButtonElement>(
+        `<li>
+<button data-photoflex-action class="white dim" data-width='${width}' data-height='${height}'>${width}x${height}</button>
+<button data-photoflex-action data-index="${index}" class="white close"><span class="material-symbols-outlined">close</span></button>
+<li>`,
+        menu
+      )
+    })
+    dom.createFromHtml(
+      `<li><input class="dim" type="text" placeholder="ex)640,480"><button data-photoflex-action class="blue add">ADD</button><li>`,
+      menu
+    )
+  }
   private render() {
-    if (this.shadowRoot) {
-      this.shadowRoot.innerHTML = `
-        <style>
-          button {
-            padding: 5px 10px;
-            margin: 5px;
-            border: 1px solid #ccc;
-            background-color: #eee;
-            cursor: pointer;
-          }
-        </style>
-        ${this.dimensions
-          .map(
-            (dim) =>
-              `<button data-width='${dim.width}' data-height='${dim.height}'>${dim.width}x${dim.height}</button>`
-          )
-          .join('')}
-      `
+    const { shadowRoot: root } = this
+    if (root) {
+      const menu = dom.create<HTMLMenuElement>('menu[data-dimension-selector]')
+      root.appendChild(menu)
+      this._renderDimension(menu)
+      dom.event.click(menu, 'button[data-width][data-height]', (e) => {
+        const button = e.target as HTMLButtonElement
+        const width = parseInt(button.dataset.width || '')
+        const height = parseInt(button.dataset.height || '')
 
-      this.shadowRoot.querySelectorAll('button').forEach((button) => {
-        button.addEventListener('click', () => {
-          const width = parseInt(button.dataset.width || '')
-          const height = parseInt(button.dataset.height || '')
-
+        if (width && height) {
           this.dispatchEvent(
             new CustomEvent('dimension-selected', { detail: { width, height } })
           )
-          if (width && height) {
-            this.ctx.op.resizeViewport(width, height)
-          }
-        })
+          this.ctx.op.resizeViewport(width, height)
+        }
+      })
+      dom.event.click(menu, 'button.close', (e) => {
+        const btn = dom.closest<HTMLButtonElement>(
+          e.target as HTMLButtonElement,
+          'button.close'
+        )
+        if (!btn) {
+          return
+        }
+        const index = parseInt(btn.dataset.index || '')
+        this.dimensions.splice(index, 1)
+        this._renderDimension(menu)
+      })
+      dom.event.click(menu, 'button.add', () => {
+        const input = dom.findOne<HTMLInputElement>(menu, 'input.dim')
+        const dim = this._parseDimension(input.value)
+        if (dim) {
+          this.dimensions.push({ width: dim[0], height: dim[1] })
+          this._renderDimension(menu)
+        }
       })
     }
+  }
+  /**
+   * parse dimension from the value
+   * @param value dimension form like "w480,320"
+   * @returns length of two array as [width, height]
+   */
+  private _parseDimension(value: string): [number, number] | undefined {
+    const match = value.trim().match(/(^\d+)\W+(\d+$)/)
+    if (match) {
+      return [parseInt(match[1]), parseInt(match[2])]
+    }
+    return undefined
   }
 }
 

@@ -12,12 +12,12 @@ export class ResizeAction extends AbstractAction {
   }
   protected createElement(): HTMLElement {
     const btn =
-      dom.createFromHtml<HTMLButtonElement>(`<button data-photoflex-action aria-label="Resize viewport">
+      dom.createFromHtml<HTMLButtonElement>(`<button class="blue" data-photoflex-action aria-label="Resize viewport">
   <span class="material-symbols-outlined">aspect_ratio</span>
 </button>`)
-    btn.disabled = true
+    // btn.disabled = true
     this._ctx.op.eventBus.subscribe('open', () => {
-      btn.disabled = false
+      // btn.disabled = false
       this._ctx.op.hideeModal()
     })
     return btn

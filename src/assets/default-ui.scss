@@ -56,3 +56,21 @@
     background: #d3d3d3;
   }
 }
+[data-dimension-selector] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 200px;
+  li {
+    display: flex;
+    margin: 8px;
+    column-gap: 8px;
+    .dim {
+      flex: 1 1 auto;
+      width: 100%;
+    }
+    .close {
+      flex: 0 0 auto;
+    }
+  }
+}

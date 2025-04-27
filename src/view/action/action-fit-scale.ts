@@ -25,7 +25,7 @@ export class ActionFitCover extends AbstractAction {
   }
   protected createElement(): HTMLElement {
     const btn =
-      dom.createFromHtml<HTMLButtonElement>(`<button data-photoflex-action aria-label="${
+      dom.createFromHtml<HTMLButtonElement>(`<button class="blue" data-photoflex-action aria-label="${
         this.label
       }">
       <span class="material-symbols-outlined">${this.icons[this.scale]}</span>

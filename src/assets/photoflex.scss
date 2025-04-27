@@ -58,9 +58,7 @@
 }
 /* START: aciton */
 [data-photoflex-action] {
-  background-color: #007bff;
   border: none;
-  color: white;
   padding: 0.3rem;
   cursor: pointer;
   display: flex;
@@ -69,22 +67,55 @@
   transition: background 0.2s ease-in-out;
   font-size: 1rem;
   &:hover {
-    background-color: #0056b3;
+    background-color: #ececec;
   }
   &:disabled {
-    background-color: #a0c4ff;
+    background-color: #eee;
     cursor: not-allowed;
     opacity: 0.8;
   }
   &:focus {
-    outline: 2px solid #007bffa0;
+    outline: 2px solid #aaa;
   }
   &:focus-visible {
-    outline: 2px solid #003873;
+    outline: 2px solid #777;
   }
   .material-icons,
   .material-symbols-outlined {
     font-size: 1rem;
+  }
+}
+[data-photoflex-action].white {
+  background-color: white;
+  color: #444;
+  &:hover {
+    background-color: #eee;
+  }
+  &:disabled {
+    color: #999;
+    background-color: #d0d0d0;
+  }
+  &:focus {
+    outline-color: #ababab;
+  }
+  &:focus-visible {
+    outline-color: #999;
+  }
+}
+[data-photoflex-action].blue {
+  background-color: #007bff;
+  color: white;
+  &:hover {
+    background-color: #0056b3;
+  }
+  &:disabled {
+    background-color: #a0c4ff;
+  }
+  &:focus {
+    outline-color: #007bffa0;
+  }
+  &:focus-visible {
+    outline-color: #003873;
   }
 }
 

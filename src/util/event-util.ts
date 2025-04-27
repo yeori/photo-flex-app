@@ -32,8 +32,8 @@ export class EventUtil {
     listener: (this: EventTarget, ev: HTMLElementEventMap['click']) => void
   ): Unsubscriber {
     const clickListener = (e: MouseEvent) => {
-      let target = e.target as HTMLElement
-      if (target && target.matches(selector)) {
+      let target = (e.target as HTMLElement)!
+      if (target.closest(selector)) {
         listener.call(el, e as HTMLElementEventMap['click'])
       }
     }
