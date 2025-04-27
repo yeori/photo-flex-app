@@ -2,7 +2,11 @@ import { AbstractAction } from '.'
 import { Unsubscriber } from '../../event'
 import type { PhotoFlexContext } from '../../photo-flex-context'
 import { dom } from '../../util'
-
+const labels = {
+  cover: 'Fit cover',
+  contain: 'Fit contain',
+  real: '100% size',
+}
 export class ActionFitCover extends AbstractAction {
   private readonly icons: Record<string, string> = {
     cover: 'fullscreen',
@@ -16,12 +20,12 @@ export class ActionFitCover extends AbstractAction {
   ) {
     super({
       id: `fit-${scale}`,
-      label: scale.charAt(0).toUpperCase() + scale.substring(1),
+      label: labels[scale],
     })
   }
   protected createElement(): HTMLElement {
     const btn =
-      dom.createFromHtml<HTMLButtonElement>(`<button data-photoflex-action title="${
+      dom.createFromHtml<HTMLButtonElement>(`<button data-photoflex-action aria-label="${
         this.label
       }">
       <span class="material-symbols-outlined">${this.icons[this.scale]}</span>

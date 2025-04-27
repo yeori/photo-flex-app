@@ -31,9 +31,12 @@ export class CanvasRenderer implements IRenderer {
   ) {
     const { prefix, canvas } = this._context.param.classnames!
     this._canvas = dom.create<HTMLCanvasElement>(
-      `canvas[data-${prefix}${canvas}]`,
+      `canvas[data-${prefix}-${canvas}]`,
       this.boardEl
     )
+    this._canvas.role = 'img'
+    this._canvas.ariaLabel = 'canvas to render image. Drag to move the image.'
+    dom.style(this._canvas, { zIndex: '10' })
     this._ctx = this._resize(this._canvas, this._context.param)
     this._resolveOrigin = (point: Point) => {
       const x = this.width / 2

@@ -19,7 +19,7 @@ export class OpenAction extends AbstractAction {
    */
   protected createElement(): HTMLElement {
     const labelEl = dom.createFromHtml<HTMLLabelElement>(`
-      <label tabindex=0 data-photoflex-action for="photoflex-f-input"><input type="file" id="photoflex-f-input" data-photoflex-action title="Open Image"></input><span class="material-symbols-outlined">folder_open</span></label>
+      <label tabindex=0 data-photoflex-action for="photoflex-f-input" aria-label="Open image file"><input type="file" id="photoflex-f-input" data-photoflex-action title="Open Image"></input><span class="material-symbols-outlined">folder_open</span></label>
     `)
     labelEl.role = 'button'
     labelEl.ariaPressed = 'false'

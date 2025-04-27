@@ -1,17 +1,18 @@
 [data-photoflex-root] {
   position: relative;
-  background: #eee;
+  background: var(--photoflex-root-bgc, #eee);
   display: flex;
+  align-items: center;
   justify-content: center;
   padding: 48px 0 16px;
-  overflow-x: hidden;
+  overflow: hidden;
   &.photoflex-drag-over {
     border: 2px dashed #ccc;
   }
   [data-photoflex-board] {
     position: relative;
     display: grid;
-    &.ruler {
+    &.board {
       grid-template-columns: 16px 1fr;
       grid-template-rows: 16px 1fr;
       canvas {
@@ -19,7 +20,7 @@
         grid-column: 2 / 3;
       }
     }
-    canvas {
+    [data-photoflex-canvas] {
       overscroll-behavior: none;
       background: white;
       box-shadow: 0 0 16px rgba(0, 0, 0, 0.4), 0 0 8px rgba(0, 0, 0, 0.2);
@@ -54,7 +55,6 @@
   top: 4px;
   display: flex;
   column-gap: 4px;
-  align-items: center;
 }
 /* START: aciton */
 [data-photoflex-action] {

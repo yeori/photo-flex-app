@@ -1,16 +1,26 @@
 import { ImageSource } from '../image-source'
 
-export type ZoomEvent = { zoom: number; layer: string }
+export type ZoomEvent = { ratio: number; layer: string }
+/**
+ * image move event
+ */
 export type MoveEvent = {
   cx: number
   cy: number
   width: number
   height: number
+  layer: string
 }
+/**
+ * image open event
+ */
 export type ImageOpenEvent = {
   image: ImageSource
   ratio: number
 }
+/**
+ * viewport resize event
+ */
 export type ViewportEvent = {
   width: number
   height: number

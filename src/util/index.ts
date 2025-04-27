@@ -229,5 +229,20 @@ export class DomUtil {
   randomKey() {
     return crypto.randomUUID ? crypto.randomUUID() : rand(2)
   }
+  /**
+   * apply style to the element
+   * @param el
+   * @param style
+   */
+  style(
+    el: HTMLElement,
+    style: Partial<Record<keyof CSSStyleDeclaration, string>>
+  ) {
+    Object.keys(style).forEach((key) => {
+      const prop = key as keyof CSSStyleDeclaration
+      //@ts-ignore
+      el.style[prop] = style[prop]!
+    })
+  }
 }
 export const dom = new DomUtil()

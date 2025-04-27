@@ -15,8 +15,6 @@ type PhotoFlexEventMap = {
   'viewport:resize': ViewportEvent
 }
 
-// type EventName = keyof PhotoFlexEventMap
-
 export class EventBus {
   private _bus: EventEmitter<PhotoFlexEvent>
   constructor() {

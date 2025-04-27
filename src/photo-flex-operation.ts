@@ -1,5 +1,5 @@
 import { type EventBus } from './event/event-bus'
-import { PhotoFlex } from './photo-flex'
+import { type ImageLayer, PhotoFlex } from './photo-flex'
 
 export interface IPhotoFlexOp {
   /**
@@ -42,8 +42,18 @@ export interface IPhotoFlexOp {
   /** Sets the zoom level to the photo's original size. */
   fitToRealSize(): void
   openImage(file: File): Promise<void>
+  /**
+   * text form for current zoom level
+   * @param metric
+   */
+  getZoomText<K extends keyof ZoomValueMap>(metric: K): ZoomValueMap[K]
+  getLayer(layerUuid: string): ImageLayer
 }
 
+type ZoomValueMap = {
+  percent: string
+  decimal: number
+}
 export class PhotoFlexOp implements IPhotoFlexOp {
   constructor(
     private readonly target: PhotoFlex,
@@ -85,5 +95,21 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   }
   openImage(file: File): Promise<void> {
     return this.target.setImage(file)
+  }
+  getZoomText<K extends keyof ZoomValueMap>(metric: K): ZoomValueMap[K] {
+    const zoomLevle = this.target.getZoomLevel()
+    if (metric === 'percent') {
+      const value = zoomLevle * 100
+      return `${Math.floor(value)}%` as ZoomValueMap[K]
+    } else if (metric === 'decimal') {
+      return zoomLevle as ZoomValueMap[K]
+    } else {
+      throw new Error(
+        `check metric value [${metric}]. Use 'percent' or 'decimal'`
+      )
+    }
+  }
+  getLayer(layerUuid: string): ImageLayer {
+    return this.target.getLayer(layerUuid)
   }
 }

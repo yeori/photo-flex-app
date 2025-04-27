@@ -19,6 +19,7 @@ import { CanvasRenderer } from './rendering/canvas-view'
 import { ModalUI } from './component/modal-ui'
 import { ZoomByPinch } from './dnd/zoom-by-pinch'
 import { IRenderer } from './rendering'
+import { AfterImageView } from './view/after-image-view'
 
 const DefaultInit: Required<PhotoFlexInitParam> = {
   width: '400px',
@@ -35,10 +36,10 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
         { width: 640, height: 640 },
       ],
     },
-    'zoom',
     'fit-cover',
     'fit-contain',
     'fit-real',
+    'zoom',
   ],
   classnames: {
     prefix: 'photoflex',
@@ -62,10 +63,12 @@ export class PhotoFlex implements Viewport {
   private _actionFactory: ActionFactory
   private _operator: IPhotoFlexOp
   private _eventBus: EventBus
+  //@ts-ignore
   private _rulerView: RulerView
   private _wheelControl: WheelController
   private _photoFlexContext: PhotoFlexContext
   private _canvasView: CanvasRenderer
+  private _afterImageView: AfterImageView
   private _modalUI?: ModalUI
 
   /**
@@ -86,7 +89,7 @@ export class PhotoFlex implements Viewport {
     dom.bindDataset(el, `${prefix}-${root}`, '')
 
     this._boardEl = dom.create<HTMLDivElement>(
-      `.ruler${ctx.resolveDataName('board')}`,
+      `${ctx.resolveDataName('board')}`,
       el
     )
     this._pixelRatio = self.devicePixelRatio || 1
@@ -96,6 +99,9 @@ export class PhotoFlex implements Viewport {
       this._pixelRatio,
       this._photoFlexContext
     )
+    this._afterImageView = new AfterImageView(this._photoFlexContext)
+    this._afterImageView.bindTo(this._boardEl)
+
     this._dnd = new DndContext(this._canvasView.canvas, {
       translate: (_, x, y) => ({
         x: x - this.width / 2,
@@ -107,8 +113,8 @@ export class PhotoFlex implements Viewport {
     this._renderers.push(new GridRenderer(this._photoFlexContext))
     this._actionFactory = new ActionFactory(el, this._photoFlexContext)
     this._actionFactory.installActions(this._param.actions || [])
-    this._rulerView = new RulerView(this._photoFlexContext)
-    this._rulerView.bindTo(this._boardEl)
+    // this._rulerView = new RulerView(this._photoFlexContext)
+    // this._rulerView.bindTo(this._boardEl)
     this._wheelControl = new WheelController(this._photoFlexContext)
     this._wheelControl.bindTo(this._boardEl)
     this._dnd.addDragListener(new ImageDragger(this))
@@ -262,8 +268,19 @@ export class PhotoFlex implements Viewport {
     return this._canvasView.getLayerOrigins()
   }
 
-  setLayerOrigin(index: number, x: number, y: number): void {
-    this._canvasView.setLayerOrigin(index, x, y)
+  setLayerOrigin(index: number, cx: number, cy: number): void {
+    this._canvasView.setLayerOrigin(index, cx, cy)
+    const layer = this._canvasView.getFirstLayer()
+    if (layer) {
+      const { width, height } = layer.image
+      this._eventBus.emit('move', {
+        cx,
+        cy,
+        width,
+        height,
+        layer: layer.uuid,
+      })
+    }
   }
   /**
    * resize canvas size
@@ -322,37 +339,60 @@ export class PhotoFlex implements Viewport {
     const firstLayer = this._canvasView.getFirstLayer()
     return firstLayer ? firstLayer.ratio : -1
   }
-  private _updateZoom(zoom: number) {
-    this._canvasView.setLayerRatios(zoom)
-    this.repaint()
-    const firstLayer = this._canvasView.getFirstLayer()
-    if (firstLayer) {
+  private _updateZoom(
+    zommResolver: (layer: ImageLayer) => { ratio: number; origin?: Point }
+  ) {
+    this._canvasView.getLayers().forEach((layer) => {
+      const { ratio, origin } = zommResolver(layer)
+      const { uuid } = layer
+      layer.setRatio(ratio)
       this._eventBus.emit('zoom', {
-        zoom: firstLayer.ratio,
-        layer: firstLayer.uuid,
+        ratio,
+        layer: uuid,
       })
-    }
+      if (origin) {
+        layer.setOrigin(origin.x, origin.y)
+        const { width, height } = layer.image
+        this._eventBus.emit('move', {
+          cx: origin.x,
+          cy: origin.y,
+          width,
+          height,
+          layer: uuid,
+        })
+      }
+    })
+    this.repaint()
   }
   updateZoomBy(zoomDelta: number): void {
-    this._updateZoom(this.getZoomLevel() + zoomDelta)
+    this._updateZoom((layer) => ({
+      ratio: layer.ratio + zoomDelta,
+    }))
   }
   setZoom(zoom: number): void {
-    this._updateZoom(zoom)
+    this._updateZoom(() => ({
+      ratio: zoom,
+    }))
   }
   fitBy(scale: 'cover' | 'contain') {
-    this._canvasView.getLayers().forEach((layer) => {
-      const ratio = this._calculateRatio(layer.image, scale)
-      layer.setRatio(ratio)
-      layer.setOrigin(0, 0)
-    })
-    this.repaint()
+    const origin = { x: 0, y: 0 } as Point
+    this._updateZoom((layer) => ({
+      ratio: this._calculateRatio(layer.image, scale),
+      origin,
+    }))
   }
   fitToRealSize(): void {
-    this._canvasView.getLayers().forEach((layer) => {
-      layer.setRatio(1)
-      layer.setOrigin(0, 0)
-    })
-    this.repaint()
+    const realSize = { ratio: 1, origin: { x: 0, y: 0 } }
+    this._updateZoom(() => realSize)
+  }
+  getLayer(layerUuid: string): ImageLayer {
+    const layer = this._canvasView
+      .getLayers()
+      .find((layer) => layer.uuid === layerUuid)
+    if (!layer) {
+      throw new Error(`layer not found.[${layerUuid}]`)
+    }
+    return layer
   }
   dispose() {
     this._dnd.release()
@@ -366,6 +406,14 @@ export class PhotoFlex implements Viewport {
     link.href = imageURL
     link.download = name
     link.click()
+  }
+  async captureBy(type: 'dataurl'): Promise<string> {
+    if (type === 'dataurl') {
+      const { imageURL } = await this._canvasView.capture()
+      return imageURL
+    } else {
+      throw new Error('check capture type: ' + type)
+    }
   }
   static init(el: HTMLElement, param?: PhotoFlexInitParam): IPhotoFlexOp {
     const flex = new PhotoFlex(el, param)

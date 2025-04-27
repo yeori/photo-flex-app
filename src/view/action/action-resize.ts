@@ -12,7 +12,7 @@ export class ResizeAction extends AbstractAction {
   }
   protected createElement(): HTMLElement {
     const btn =
-      dom.createFromHtml<HTMLButtonElement>(`<button data-photoflex-action title="Resize">
+      dom.createFromHtml<HTMLButtonElement>(`<button data-photoflex-action aria-label="Resize viewport">
   <span class="material-symbols-outlined">aspect_ratio</span>
 </button>`)
     btn.disabled = true
