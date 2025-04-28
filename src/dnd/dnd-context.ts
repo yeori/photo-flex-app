@@ -44,8 +44,10 @@ export class DndContext {
   private _pinchEvent: PinchEvent | undefined
   private _dragEvent: DragEvent | undefined
   private unsubs: (() => void)[] = []
+  private _touchEventSupported: boolean
 
   constructor(el: HTMLElement, param?: DndInitParam) {
+    this._touchEventSupported = 'TouchEvent' in window
     this._el = el
     this._param = (param as Required<DndInitParam>) || DefaultDndParam
     this._stateMap.set('idle', new IdleState(this))
@@ -97,7 +99,7 @@ export class DndContext {
   captureStart(event: TouchEvent | MouseEvent) {
     let clientX = 0
     let clientY = 0
-    if (event instanceof TouchEvent) {
+    if (this._touchEventSupported && event instanceof TouchEvent) {
       const [touch] = event.touches
       if (!touch) {
         console.error('DragState: Invalid state on entry.')
@@ -110,6 +112,8 @@ export class DndContext {
     } else if (event instanceof MouseEvent) {
       clientX = event.clientX
       clientY = event.clientY
+    } else {
+      throw new Error('check event type ' + event)
     }
 
     const rect = this.updateRect()
