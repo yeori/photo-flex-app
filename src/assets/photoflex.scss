@@ -4,7 +4,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 0 16px;
   overflow: hidden;
   &.photoflex-drag-over {
     border: 2px dashed #ccc;
@@ -12,6 +11,8 @@
   [data-photoflex-board] {
     position: relative;
     display: grid;
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr;
     &.board {
       grid-template-columns: 16px 1fr;
       grid-template-rows: 16px 1fr;
@@ -19,6 +20,10 @@
         grid-row: 2 / 3;
         grid-column: 2 / 3;
       }
+    }
+    & > canvas {
+      width: 100%;
+      height: 100%;
     }
     [data-photoflex-canvas] {
       overscroll-behavior: none;
@@ -55,6 +60,7 @@
   top: 4px;
   display: flex;
   column-gap: 4px;
+  z-index: 10;
 }
 /* START: aciton */
 [data-photoflex-action] {

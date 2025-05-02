@@ -1,7 +1,8 @@
 import { type EventBus } from './event/event-bus'
-import { type ImageLayer, PhotoFlex } from './photo-flex'
+import { type ImageLayer, PhotoFlex, Viewport } from './photo-flex'
 
 export interface IPhotoFlexOp {
+  viewportSize: Viewport
   /**
    * The event bus used for communication between different components.
    */
@@ -59,6 +60,10 @@ export class PhotoFlexOp implements IPhotoFlexOp {
     private readonly target: PhotoFlex,
     private readonly _eventBus: EventBus
   ) {}
+  get viewportSize() {
+    const { width, height } = this.target
+    return { width, height }
+  }
   get currentZoom() {
     return this.target.getZoomLevel()
   }

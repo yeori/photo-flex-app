@@ -24,7 +24,7 @@ export type ImageOpenEvent = {
 export type ViewportEvent = {
   width: number
   height: number
-  image: ImageSource
+  image?: ImageSource
 }
 /**
  * PhotoFlex event list

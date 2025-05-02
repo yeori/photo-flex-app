@@ -118,22 +118,30 @@ export class CanvasRenderer implements IRenderer {
       this.layers[index].setOrigin(x, y)
     }
   }
-
-  private _resize(canvas: HTMLCanvasElement, param: PhotoFlexInitParam) {
-    const [w, wUnit] = dom.parseUnit(param.width!)
-    const [h, hUnit] = dom.parseUnit(param.height!)
+  private _resize(
+    canvas: HTMLCanvasElement,
+    param: PhotoFlexInitParam,
+    size?: { width: number; height: number }
+  ) {
+    const { width: w, height: h } = size || this.boardEl.getBoundingClientRect()
     const width = w * this._pixelRatio
     const height = h * this._pixelRatio
     canvas.width = width
     canvas.height = height
-    canvas.style.width = `${w}${wUnit}`
-    canvas.style.height = `${h}${hUnit}`
     const ctx = param.loadContext!(canvas)
     ctx.scale(this._pixelRatio, this._pixelRatio)
     return ctx
   }
   resize() {
     this._ctx = this._resize(this._canvas, this._context.param)
+  }
+  setSize(width: number, height: number) {
+    width = width || this.width
+    height = height || this.height
+    this._ctx = this._resize(this._canvas, this._context.param, {
+      width,
+      height,
+    })
   }
 
   clear() {

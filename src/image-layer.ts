@@ -13,6 +13,9 @@ export class ImageLayer {
     public readonly uuid: string,
     private _image: ImageSource,
     private readonly _resolveOrigin: CanvasOriginResolver,
+    /**
+     * The origin of this layer. It is relative coord from center of viewport.
+     */
     private _origin: Point,
     private _ratio: number
   ) {

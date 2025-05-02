@@ -35,6 +35,21 @@ const rand = (iter: number) => {
   }
   return keys.join('-')
 }
+type IsWritableProperty<K extends keyof CSSStyleDeclaration> =
+  CSSStyleDeclaration[K] extends Function
+    ? never
+    : { -readonly [P in K]: CSSStyleDeclaration[P] } extends {
+        [P in K]: CSSStyleDeclaration[P]
+      }
+    ? K
+    : never
+type MutableCSSStyleDeclaration = {
+  [K in keyof Omit<
+    CSSStyleDeclaration,
+    'length' | 'parentRule'
+  > as IsWritableProperty<K>]: CSSStyleDeclaration[K]
+}
+
 export class DomUtil {
   readonly event: EventUtil
   constructor() {
@@ -245,17 +260,13 @@ export class DomUtil {
     return crypto.randomUUID ? crypto.randomUUID() : rand(2)
   }
   /**
-   * apply style to the element
+   * apply styles to the element
    * @param el
    * @param style
    */
-  style(
-    el: HTMLElement,
-    style: Partial<Record<keyof CSSStyleDeclaration, string>>
-  ) {
+  style(el: HTMLElement, style: Partial<MutableCSSStyleDeclaration>) {
     Object.keys(style).forEach((key) => {
-      const prop = key as keyof CSSStyleDeclaration
-      //@ts-ignore
+      const prop = key as keyof MutableCSSStyleDeclaration
       el.style[prop] = style[prop]!
     })
   }

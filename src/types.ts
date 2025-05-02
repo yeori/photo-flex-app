@@ -39,20 +39,27 @@ export type DataNameParam = {
   toolbar?: string
   canvas?: string
 }
+export type PhotoflexSizeParam = {
+  value: 'flud' | string
+  resizable?: boolean
+}
 /**
  * initial configuration paramters
  */
 export type PhotoFlexInitParam = {
   /**
    * width of image editor canvas
+   * ```
+   * "fluid" - means "100%". fill the width of the container.
+   * ```
    * @default "400px"
    */
-  width?: string
+  width?: 'fluid' | string | PhotoflexSizeParam
   /**
    * height of image editor canvas
    * @default "400px"
    */
-  height?: string
+  height?: string | PhotoflexSizeParam
   /**
    * zoom mode of image.
    * e.g. 0.5(means 50%), "contain"(zoom to fit the viewport), "cover" means(zoom to cover the viewport)

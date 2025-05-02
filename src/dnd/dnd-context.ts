@@ -128,7 +128,14 @@ export class DndContext {
     this.initialDistance = 0
     this.setState('idle')
   }
-
+  /**
+   *
+   * @param state
+   * @param x delta x from left top corner
+   * @param y delta y from left top corner
+   * @param e
+   * @returns
+   */
   public _emitDragging(
     state: DndState,
     x: number,
@@ -256,7 +263,7 @@ export class DndContext {
   private _initMouseListeners(el: HTMLElement): () => void {
     const startHandler = (e: MouseEvent) => {
       this.captureStart(e)
-      this._emitDragging('before', 0, 0, e)
+      this._emitDragging('before', this.startX, this.startY, e)
     }
     const moveHandler = (e: MouseEvent) => {
       if (!this._dragEvent) {

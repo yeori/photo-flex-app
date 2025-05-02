@@ -88,4 +88,12 @@ export class EventUtil {
       })
     })
   }
+  bindResizeObserver(
+    el: Element,
+    callback: (entries: ResizeObserverEntry[], observer: ResizeObserver) => void
+  ): ResizeObserver {
+    const observer = new ResizeObserver(callback)
+    observer.observe(el)
+    return observer
+  }
 }

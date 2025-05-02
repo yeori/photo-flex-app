@@ -11,6 +11,9 @@ export const mergeParam = <T extends {}>(base: T, user?: T): T => {
   if (dom.isPrimitve(user) || dom.isFunction(user)) {
     return user
   }
+  if (dom.isPrimitve(base)) {
+    return mergeParam(user, {} as T)
+  }
   Object.keys(base).forEach((key) => {
     const prop = key as keyof T
     const value = user[prop]

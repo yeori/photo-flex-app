@@ -39,9 +39,9 @@ export class ActionFactory {
         if (action) {
           this.installAction(action)
         } else {
-          throw new Error(`no such action(${id})`, {
-            cause: 'ACTION_ID_NOT_FOUND',
-          })
+          console.warn(
+            `[PHOTOFLEX-APP] ACTION_ID_NOT_FOUND: no such action(${id})`
+          )
         }
       } else if (param.id === 'resize') {
         const { options } = param as ActionResizeParam

@@ -2,36 +2,32 @@ import type { DataNameParam, PhotoFlexInitParam } from './types'
 import { EventBus } from './event'
 import { IPhotoFlexOp } from './photo-flex-operation'
 import { Viewport } from './scale'
-import { dom } from './util'
+import { type ParameterContext } from './view/param-context'
 
 export class PhotoFlexContext {
   constructor(
     private readonly _op: IPhotoFlexOp,
-    private readonly _param: PhotoFlexInitParam,
-    private readonly _default: Required<PhotoFlexInitParam>
+    private readonly _paramContext: ParameterContext
   ) {}
   get op(): IPhotoFlexOp {
     return this._op
   }
   get param(): PhotoFlexInitParam {
-    return this._param
+    return this._paramContext.parameter
   }
   get wheelSensitivity() {
-    return this._param.wheelSensitivity || this._default.wheelSensitivity
+    return this._paramContext.wheelSensitivity
   }
   get viewportSize(): Viewport {
-    const w = this._param?.width || this._default.width!
-    const h = this._param?.height || this._default.height!
-    const [width] = dom.parseUnit(w)
-    const [height] = dom.parseUnit(h)
-    return { width, height }
+    return this.op.viewportSize
   }
   get eventBus(): EventBus {
     return this._op.eventBus
   }
   resolveDataName(viewType: keyof DataNameParam) {
-    const { prefix } = this._param.classnames!
-    const val = this._param.classnames![viewType]
+    const { parameter } = this._paramContext
+    const { prefix } = parameter.classnames!
+    const val = parameter.classnames![viewType]
     return `[data-${prefix}-${val}]`
   }
 }

@@ -32,8 +32,10 @@ export class RulerView implements IView {
     eventBus.subscribe('open', (paylod) => {
       this._draw(paylod.image)
     })
-    eventBus.subscribe('viewport:resize', (payload) => {
-      this._draw(payload.image)
+    eventBus.subscribe('viewport:resize', ({ image }) => {
+      if (image) {
+        this._draw(image)
+      }
     })
   }
 }
