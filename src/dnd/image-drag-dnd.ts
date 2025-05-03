@@ -7,6 +7,7 @@ export class ImageDragger implements DragListener {
   constructor(readonly editor: PhotoFlex) {}
   before(): void {
     this._origins = this.editor.getLayerOrigins()
+    this.editor.setCursor('grabbing')
   }
   dragging(e: DragEvent): void {
     const { editor } = this
@@ -22,5 +23,6 @@ export class ImageDragger implements DragListener {
   }
   end(): void {
     this._origins = []
+    this.editor.setCursor('grab')
   }
 }

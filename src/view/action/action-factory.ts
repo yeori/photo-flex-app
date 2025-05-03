@@ -7,6 +7,7 @@ import { ActionMove } from './action-move'
 import { ResizeAction } from './action-resize'
 import { ZoomAction } from './action-zoom'
 import { OpenAction } from './action-open'
+import { CaptureAction } from './action-capture'
 
 export class ActionFactory {
   private _el: HTMLElement
@@ -23,13 +24,15 @@ export class ActionFactory {
     this._defaultActions.set(action.id, action)
   }
   private _installDefaultActions() {
-    this._addToMap(new OpenAction(this._ctx))
+    this._addToMap(new OpenAction(this._ctx, 'file'))
+    this._addToMap(new OpenAction(this._ctx, 'camera'))
     this._addToMap(new ActionMove(this._ctx))
     this._addToMap(new ResizeAction(this._ctx))
     this._addToMap(new ZoomAction(this._ctx))
     this._addToMap(new ActionFitCover(this._ctx, 'cover'))
     this._addToMap(new ActionFitCover(this._ctx, 'contain'))
     this._addToMap(new ActionFitCover(this._ctx, 'real'))
+    this._addToMap(new CaptureAction(this._ctx))
   }
   installActions(params: ActionDefinition[]) {
     params.forEach((param) => {
@@ -47,6 +50,8 @@ export class ActionFactory {
         const { options } = param as ActionResizeParam
         const action = new ResizeAction(this._ctx, options)
         this.installAction(action)
+      } else if (param.id === 'zoom') {
+        this.installAction(new ZoomAction(this._ctx))
       }
     })
   }

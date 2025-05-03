@@ -1,6 +1,7 @@
 import { CssSelector } from '../types'
 import { parseCssSelector } from './css-selector'
 import { EventUtil } from './event-util'
+import { ImageUtil } from './image-util'
 const PRIMITIVES = 'number,string,boolean'.split(',')
 const isPrimitive = (o: unknown): boolean => PRIMITIVES.includes(typeof o)
 
@@ -52,8 +53,10 @@ type MutableCSSStyleDeclaration = {
 
 export class DomUtil {
   readonly event: EventUtil
+  readonly image: ImageUtil
   constructor() {
     this.event = new EventUtil()
+    this.image = new ImageUtil()
   }
   isPrimitve(value: unknown) {
     return isPrimitive(value)

@@ -22,7 +22,26 @@ export type ActionResizeParam = {
   options: { width: number; height: number }[]
 }
 
-export type ActionDefinition = string | ActionParam | ActionResizeParam
+export type ActionZoomParam = {
+  id: 'zoom'
+  label: string
+  options: {
+    min: number
+    max: number
+    step: number
+    value: number
+  }[]
+}
+export type ActionDefinition =
+  | 'open'
+  | 'resize'
+  | ActionResizeParam
+  | 'zoom'
+  | ActionZoomParam
+  | 'fit-cover'
+  | 'fit-contain'
+  | 'fit-real'
+  | ActionParam
 /**
  * datanames for ui elements.
  *
@@ -61,11 +80,14 @@ export type PhotoFlexInitParam = {
    */
   height?: string | PhotoflexSizeParam
   /**
-   * zoom mode of image.
-   * e.g. 0.5(means 50%), "contain"(zoom to fit the viewport), "cover" means(zoom to cover the viewport)
+   * scale mode of open image.
+   * ```
+   * number - 0.5 for 50%
+   * "contain" - adjusts the image to fully fit into the viewport.
+   * "cover" - adjusts the image to fully cover the viewport
    * @default "contain"
    */
-  zoom?: number | 'contain' | 'cover'
+  scale?: number | 'contain' | 'cover'
   /**
    * sensitivity when zooming by mouse wheel
    * @default 0.002

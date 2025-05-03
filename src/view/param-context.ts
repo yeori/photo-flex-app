@@ -1,10 +1,10 @@
 import { mergeParam } from '../merge-param'
-import { ActionDefinition, PhotoFlexInitParam } from '../types'
+import { ActionDefinition, ActionZoomParam, PhotoFlexInitParam } from '../types'
 
 const DefaultInit: Required<PhotoFlexInitParam> = {
   width: '400px',
   height: '400px',
-  zoom: 'contain',
+  scale: 'contain',
   wheelSensitivity: 0.002,
   actions: [
     'open',
@@ -32,6 +32,12 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
   loadContext: (canvas) => canvas.getContext('2d')!,
 }
 
+const DefaultZoomActionOption = {
+  min: 0.1,
+  max: 2,
+  step: 0.1,
+  value: 1,
+}
 export class ParameterContext {
   private readonly _param: PhotoFlexInitParam
   constructor(param?: PhotoFlexInitParam) {
@@ -50,18 +56,18 @@ export class ParameterContext {
     return { ...this._param.classnames! }
   }
   get scaleMode() {
-    return this._param.zoom
+    return this._param.scale
   }
   get size() {
     const { width, height } = this._param
     return { width: width!, height: height! }
   }
   get ratio(): number {
-    const zoom = this._param.zoom!
-    if (zoom === 'cover' || zoom === 'contain') {
+    const scale = this._param.scale!
+    if (scale === 'cover' || scale === 'contain') {
       throw new Error('zoom mode is not supported')
     } else {
-      return zoom
+      return scale
     }
   }
   private _setSizeAt(target: 'width' | 'height', value: number) {
@@ -95,9 +101,35 @@ export class ParameterContext {
   }
   isResizable(target: 'width' | 'height') {
     const elem = this._param[target]!
-    if (typeof elem === 'string') {
+    if (elem === 'fluid') {
+      return true
+    } else if (typeof elem === 'string') {
       return false
     }
     return !!elem.resizable
+  }
+  getOptionForZoomAction(): {
+    min: number
+    max: number
+    step: number
+    value: number
+  } {
+    const { actions } = this._param
+    const zoom = actions!.find((action) => {
+      if (typeof action === 'string') {
+        return action === 'zoom'
+      } else return action.id === 'zoom'
+    })
+    if (!zoom || typeof zoom === 'string') {
+      return DefaultZoomActionOption
+    } else {
+      return (zoom as ActionZoomParam).options?.[0] || DefaultZoomActionOption
+    }
+  }
+  resolveScale(scale: number): number {
+    const { min, max } = this.getOptionForZoomAction()
+    let val = Math.max(min, scale)
+    val = Math.min(max, val)
+    return val
   }
 }

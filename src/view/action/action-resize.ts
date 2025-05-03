@@ -16,7 +16,7 @@ export class ResizeAction extends AbstractAction {
   <span class="material-symbols-outlined">aspect_ratio</span>
 </button>`)
     // btn.disabled = true
-    this._ctx.op.eventBus.subscribe('open', () => {
+    this._ctx.subscribe('open', () => {
       // btn.disabled = false
       this._ctx.op.hideeModal()
     })

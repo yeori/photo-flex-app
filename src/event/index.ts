@@ -27,6 +27,24 @@ export type ViewportEvent = {
   image?: ImageSource
 }
 /**
+ * a captured image
+ */
+export type CaptureEvent = {
+  /**
+   * DataURL form if type is "dataurl"
+   */
+  image: string
+  type: 'dataurl'
+  /**
+   * original file name
+   */
+  name: string
+  /**
+   * file length in bytes
+   */
+  length: number
+}
+/**
  * PhotoFlex event list
  * ```
  * zoom - zool level changed
@@ -35,6 +53,11 @@ export type ViewportEvent = {
  * viewport:resize - viewport(canvas) is resized
  * ```
  */
-export type PhotoFlexEvent = 'zoom' | 'move' | 'open' | 'viewport:resize'
+export type PhotoFlexEvent =
+  | 'zoom'
+  | 'move'
+  | 'open'
+  | 'viewport:resize'
+  | 'capture'
 export type Unsubscriber = () => void
 export { EventBus } from './event-bus'

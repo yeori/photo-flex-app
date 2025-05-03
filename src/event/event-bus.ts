@@ -6,13 +6,15 @@ import {
   ImageOpenEvent,
   PhotoFlexEvent,
   ViewportEvent,
+  CaptureEvent,
 } from '.'
 
-type PhotoFlexEventMap = {
+export type PhotoFlexEventMap = {
   zoom: ZoomEvent
   move: MoveEvent
   open: ImageOpenEvent
   'viewport:resize': ViewportEvent
+  capture: CaptureEvent
 }
 
 export class EventBus {

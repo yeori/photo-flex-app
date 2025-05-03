@@ -1,5 +1,11 @@
-import { type EventBus } from './event/event-bus'
-import { type ImageLayer, PhotoFlex, Viewport } from './photo-flex'
+import { PhotoFlexEventMap, type EventBus } from './event/event-bus'
+import {
+  type ImageLayer,
+  PhotoFlex,
+  PhotoFlexEvent,
+  Viewport,
+} from './photo-flex'
+import { Unsubscriber } from './util/event-util'
 
 export interface IPhotoFlexOp {
   viewportSize: Viewport
@@ -49,6 +55,21 @@ export interface IPhotoFlexOp {
    */
   getZoomText<K extends keyof ZoomValueMap>(metric: K): ZoomValueMap[K]
   getLayer(layerUuid: string): ImageLayer
+  /**
+   * Captures the viewport and dispatches the `capture` event.
+   * ```
+   * flex.op.subscribe('capture', (payload) => {
+   *   console.log('[capture]', payload)
+   * })
+   */
+  sendCapture(): void
+  /**
+   * registers event listener
+   */
+  subscribe<K extends PhotoFlexEvent>(
+    event: K,
+    handler: (payload: PhotoFlexEventMap[K]) => void
+  ): Unsubscriber
 }
 
 type ZoomValueMap = {
@@ -116,5 +137,14 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   }
   getLayer(layerUuid: string): ImageLayer {
     return this.target.getLayer(layerUuid)
+  }
+  sendCapture(): void {
+    this.target.sendCapture()
+  }
+  subscribe<K extends PhotoFlexEvent>(
+    event: K,
+    handler: (payload: PhotoFlexEventMap[K]) => void
+  ): Unsubscriber {
+    return this.eventBus.subscribe(event, handler)
   }
 }

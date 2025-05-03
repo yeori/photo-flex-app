@@ -28,11 +28,11 @@ export class RulerView implements IView {
   }
   bindTo(container: HTMLElement) {
     dom.appends(container, this._hRuler, this._vRuler)
-    const { eventBus } = this._ctx
-    eventBus.subscribe('open', (paylod) => {
+    const { _ctx } = this
+    _ctx.subscribe('open', (paylod) => {
       this._draw(paylod.image)
     })
-    eventBus.subscribe('viewport:resize', ({ image }) => {
+    _ctx.subscribe('viewport:resize', ({ image }) => {
       if (image) {
         this._draw(image)
       }

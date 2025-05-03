@@ -9,17 +9,29 @@ import { dom } from '../../util'
 export class OpenAction extends AbstractAction {
   private fileInput: HTMLInputElement | null = null
 
-  constructor(private readonly _ctx: PhotoFlexContext) {
+  constructor(
+    private readonly _ctx: PhotoFlexContext,
+    private readonly type: 'file' | 'camera'
+  ) {
     // Define action ID and default label
-    super({ id: 'open', label: 'Open' })
+    super({ id: type, label: 'Open' })
   }
 
   /**
    * Creates the button element for the action.
    */
   protected createElement(): HTMLElement {
-    const labelEl = dom.createFromHtml<HTMLLabelElement>(`
-      <label  class="blue" tabindex=0 data-photoflex-action for="photoflex-f-input" aria-label="Open image file"><input type="file" id="photoflex-f-input" data-photoflex-action title="Open Image"></input><span class="material-symbols-outlined">folder_open</span></label>
+    const label = this.type === 'file' ? 'Open Image' : 'Take Photo'
+    const id = `photoflex-f-input-${this.type}`
+    const icon = this.type === 'file' ? 'folder_open' : 'photo_camera'
+    const capture = this.type === 'file' ? '' : 'environment'
+    const labelEl =
+      dom.createFromHtml<HTMLLabelElement>(`<label  class="blue" tabindex=0 data-photoflex-action for="${id}" aria-label="${label}">
+  <input type="file" id="${id}" accept="image/*" ${
+        capture && `capture="${capture}"`
+      } data-photoflex-action title="${label}"></input>
+  <span class="material-symbols-outlined">${icon}</span>
+</label>
     `)
     labelEl.role = 'button'
     labelEl.ariaPressed = 'false'
@@ -42,7 +54,7 @@ export class OpenAction extends AbstractAction {
     })
     this.fileInput = fileInput
 
-    this._ctx.eventBus.subscribe('open', () => {
+    this._ctx.subscribe('open', () => {
       fileInput.value = ''
     })
 

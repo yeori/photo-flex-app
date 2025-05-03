@@ -20,17 +20,17 @@ export class AfterImageView implements IView {
   }
   bindTo(container: HTMLElement): void {
     container.appendChild(this._canvas)
-    const { eventBus } = this._ctx
-    eventBus.subscribe('open', (payload) => {
+    const { _ctx } = this
+    _ctx.subscribe('open', (payload) => {
       const { width, height } = payload.image
       this._render(width, height, payload.image)
     })
-    eventBus.subscribe('zoom', (payload) => {
+    _ctx.subscribe('zoom', (payload) => {
       const layer: ImageLayer = this._ctx.op.getLayer(payload.layer)
       const { width, height } = layer.image
       this._render(width, height)
     })
-    eventBus.subscribe('move', (payload) => {
+    _ctx.subscribe('move', (payload) => {
       this._setOrigin(payload.cx, payload.cy)
     })
   }

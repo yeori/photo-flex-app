@@ -1,8 +1,9 @@
 import type { DataNameParam, PhotoFlexInitParam } from './types'
-import { EventBus } from './event'
-import { IPhotoFlexOp } from './photo-flex-operation'
-import { Viewport } from './scale'
+import type { EventBus, PhotoFlexEvent, Unsubscriber } from './event'
+import type { IPhotoFlexOp } from './photo-flex-operation'
+import type { Viewport } from './scale'
 import { type ParameterContext } from './view/param-context'
+import { PhotoFlexEventMap } from './event/event-bus'
 
 export class PhotoFlexContext {
   constructor(
@@ -24,10 +25,19 @@ export class PhotoFlexContext {
   get eventBus(): EventBus {
     return this._op.eventBus
   }
+  get paramContext(): ParameterContext {
+    return this._paramContext
+  }
   resolveDataName(viewType: keyof DataNameParam) {
     const { parameter } = this._paramContext
     const { prefix } = parameter.classnames!
     const val = parameter.classnames![viewType]
     return `[data-${prefix}-${val}]`
+  }
+  subscribe<K extends PhotoFlexEvent>(
+    event: K,
+    handler: (payload: PhotoFlexEventMap[K]) => void
+  ): Unsubscriber {
+    return this.eventBus.subscribe(event, handler)
   }
 }

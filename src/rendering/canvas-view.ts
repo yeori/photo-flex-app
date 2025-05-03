@@ -67,6 +67,9 @@ export class CanvasRenderer implements IRenderer {
   get ctx() {
     return this._ctx
   }
+  setCursor(cursorName: string) {
+    this._canvas.style.cursor = cursorName
+  }
 
   /**
    * Render layers on the canvas.
@@ -99,13 +102,13 @@ export class CanvasRenderer implements IRenderer {
 
   updateLayerRatiosBy(delta: number): void {
     this.layers.forEach((layer) => {
-      layer.updateRatioBy(delta)
+      layer.updateScaleBy(delta)
     })
   }
 
   setLayerRatios(ratio: number): void {
     this.layers.forEach((layer) => {
-      layer.setRatio(ratio)
+      layer.setScale(ratio)
     })
   }
 

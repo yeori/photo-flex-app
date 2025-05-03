@@ -17,7 +17,7 @@ export class ImageLayer {
      * The origin of this layer. It is relative coord from center of viewport.
      */
     private _origin: Point,
-    private _ratio: number
+    private _scale: number
   ) {
     this._area = this._captureArea()
   }
@@ -25,10 +25,10 @@ export class ImageLayer {
     return this._image
   }
   get ratio(): number {
-    return this._ratio
+    return this._scale
   }
   private _captureArea(): Area {
-    return (this._area = locateOnCenter(this._image, this._origin, this._ratio))
+    return (this._area = locateOnCenter(this._image, this._origin, this._scale))
   }
   getOrigin(): Point {
     return { ...this._origin }
@@ -42,16 +42,16 @@ export class ImageLayer {
    * It changes the scale ratio of this layer.
    * @param delta The diff from current ratio.
    */
-  updateRatioBy(delta: number) {
-    const newRatio = this._ratio + delta
-    this.setRatio(newRatio)
+  updateScaleBy(delta: number) {
+    const scale = this._scale + delta
+    this.setScale(scale)
   }
   /**
    * It changes the scale ratio of this layer.
-   * @param ratio The new scale ratio.
+   * @param scale The new scale ratio.
    */
-  setRatio(ratio: number) {
-    this._ratio = Math.max(0.1, ratio)
+  setScale(scale: number) {
+    this._scale = scale // Math.max(0.1, ratio)
     this._captureArea()
   }
   draw(ctx: CanvasRenderingContext2D) {

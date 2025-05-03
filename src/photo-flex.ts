@@ -11,7 +11,6 @@ import { ImageLayer } from './image-layer'
 import { ActionFactory } from './view/action/action-factory'
 import { type IPhotoFlexOp, PhotoFlexOp } from './photo-flex-operation'
 import { EventBus } from './event/event-bus'
-import { RulerView } from './view/ruler/ruler-view'
 import { WheelController } from './interaction/wheel-controller'
 import { PhotoFlexContext } from './photo-flex-context'
 import { CanvasRenderer } from './rendering/canvas-view'
@@ -21,6 +20,7 @@ import { IRenderer } from './rendering'
 import { AfterImageView } from './view/after-image-view'
 import { bindDimension } from './bind-dimension'
 import { ParameterContext } from './view/param-context'
+import { CaptureEvent } from './event'
 
 /**
  * Main class for photo flex.
@@ -28,15 +28,12 @@ import { ParameterContext } from './view/param-context'
 export class PhotoFlex implements Viewport {
   private _boardEl: HTMLDivElement
   private readonly _pixelRatio: number
-  // private _param: Required<PhotoFlexInitParam>
   private _paramContext: ParameterContext
   private _dnd: DndContext
   private _renderers: IRenderer[] = []
   private _actionFactory: ActionFactory
   private _operator: IPhotoFlexOp
   private _eventBus: EventBus
-  //@ts-ignore
-  private _rulerView: RulerView
   private _wheelControl: WheelController
   private _photoFlexContext: PhotoFlexContext
   private _canvasView: CanvasRenderer
@@ -50,7 +47,6 @@ export class PhotoFlex implements Viewport {
    */
   constructor(el: HTMLElement, param?: PhotoFlexInitParam) {
     this._eventBus = new EventBus()
-    // this._param = mergeParam(DefaultInit, param) as Required<PhotoFlexInitParam>
     this._paramContext = new ParameterContext(param)
     this._operator = new PhotoFlexOp(this, this._eventBus)
     const ctx = (this._photoFlexContext = new PhotoFlexContext(
@@ -105,8 +101,6 @@ export class PhotoFlex implements Viewport {
     this._renderers.push(new GridRenderer(this._photoFlexContext))
     this._actionFactory = new ActionFactory(el, this._photoFlexContext)
     this._actionFactory.installActions(this._paramContext.actions)
-    // this._rulerView = new RulerView(this._photoFlexContext)
-    // this._rulerView.bindTo(this._boardEl)
     this._wheelControl = new WheelController(this._photoFlexContext)
     this._wheelControl.bindTo(this._boardEl)
     this._dnd.addDragListener(new ImageDragger(this))
@@ -250,15 +244,11 @@ export class PhotoFlex implements Viewport {
       }
     }
 
-    // Attach listeners
     el.addEventListener('dragenter', handleDragEnter)
     el.addEventListener('dragover', handleDragOver)
     el.addEventListener('dragleave', handleDragLeave)
     el.addEventListener('drop', handleDrop)
 
-    console.log('Dropdown listeners bound to element:', el)
-
-    // Return a dispose function to remove listeners if needed
     const dispose = () => {
       el.removeEventListener('dragenter', handleDragEnter)
       el.removeEventListener('dragover', handleDragOver)
@@ -319,19 +309,17 @@ export class PhotoFlex implements Viewport {
     })
   }
   /**
-   * calcuates ratio
+   * calcuates scale
    */
-  private _calculateRatio(source: ImageSource, scaleMode?: ScaleMode): number {
-    // use scaleMode to resolve ratio
+  private _calculateScale(source: ImageSource, scaleMode?: ScaleMode): number {
     scaleMode = scaleMode || this.scaleMode
-    // const { scaleMode } = this
     return scaleMode === 'custom'
       ? this._paramContext.ratio
       : ratioResolvers[scaleMode](source, this)
   }
   async setImage(file: File, clear: boolean = true): Promise<void> {
     const source = await ImageSource.fromFile(file)
-    const ratio: number = this._calculateRatio(source)
+    const ratio: number = this._calculateScale(source)
     const origin = { x: 0, y: 0 }
     const layer = ImageLayer.create(
       source,
@@ -354,12 +342,12 @@ export class PhotoFlex implements Viewport {
     return firstLayer ? firstLayer.ratio : -1
   }
   private _updateZoom(
-    zommResolver: (layer: ImageLayer) => { ratio: number; origin?: Point }
+    scaleResolver: (layer: ImageLayer) => { ratio: number; origin?: Point }
   ) {
     this._canvasView.getLayers().forEach((layer) => {
-      const { ratio, origin } = zommResolver(layer)
+      const { ratio, origin } = scaleResolver(layer)
       const { uuid } = layer
-      layer.setRatio(ratio)
+      layer.setScale(this._paramContext.resolveScale(ratio))
       this._eventBus.emit('zoom', {
         ratio,
         layer: uuid,
@@ -391,7 +379,7 @@ export class PhotoFlex implements Viewport {
   fitBy(scale: 'cover' | 'contain') {
     const origin = { x: 0, y: 0 } as Point
     this._updateZoom((layer) => ({
-      ratio: this._calculateRatio(layer.image, scale),
+      ratio: this._calculateScale(layer.image, scale),
       origin,
     }))
   }
@@ -408,23 +396,39 @@ export class PhotoFlex implements Viewport {
     }
     return layer
   }
+  setCursor(cursorName: string) {
+    this._canvasView.setCursor(cursorName)
+  }
   dispose() {
     this._dnd.release()
   }
   /**
-   * capture current viewport
+   * download current viewport
    */
-  async capture() {
-    const { imageURL, name } = await this._canvasView.capture()
+  async download() {
+    const { image, name } = await this._capture('dataurl')
     const link = document.createElement('a')
-    link.href = imageURL
+    link.href = image
     link.download = name
     link.click()
   }
-  async captureBy(type: 'dataurl'): Promise<string> {
+
+  private async _capture(type: 'dataurl'): Promise<CaptureEvent> {
+    const { imageURL, name } = await this._canvasView.capture()
+    const length = dom.image.inferSize(imageURL)
+    return { image: imageURL, type, name, length }
+  }
+
+  /**
+   * Capture the current viewport and emit a 'capture' event.
+   */
+  async sendCapture() {
+    const e = await this._capture('dataurl')
+    this._eventBus.emit('capture', e)
+  }
+  async captureBy(type: 'dataurl'): Promise<CaptureEvent> {
     if (type === 'dataurl') {
-      const { imageURL } = await this._canvasView.capture()
-      return imageURL
+      return await this._capture(type)
     } else {
       throw new Error('check capture type: ' + type)
     }

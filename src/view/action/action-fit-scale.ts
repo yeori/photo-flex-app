@@ -31,7 +31,7 @@ export class ActionFitCover extends AbstractAction {
       <span class="material-symbols-outlined">${this.icons[this.scale]}</span>
     </button>`)
     btn.disabled = true
-    this._unsub = this._ctx.op.eventBus.subscribe('open', () => {
+    this._unsub = this._ctx.subscribe('open', () => {
       btn.disabled = false
     })
     return btn

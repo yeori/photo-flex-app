@@ -14,12 +14,13 @@ export class ZoomAction implements IAction {
       id: 'zoom',
       label: 'zoom',
     }
-    this._el = dom.create<HTMLDivElement>('div')
+    this._el = dom.create<HTMLDivElement>('div.blue[data-photoflex-action]')
     this._el.id = this.id
     dom.style(this._el, {
       position: 'relative',
       display: 'flex',
-      columnGap: '4px',
+      padding: '0',
+      alignItems: 'stretch',
     })
   }
   get id(): string {
@@ -41,9 +42,10 @@ export class ZoomAction implements IAction {
     }
   }
   bindTo(container: HTMLElement): void {
-    const { op } = this._ctx
+    const { op, paramContext } = this._ctx
+    const { min, max, step, value } = paramContext.getOptionForZoomAction()
     const input = dom.create<HTMLInputElement>(
-      'input.blue[type=range][data-action="zoom"][min=0.1][max=4][step=0.1][value=1]',
+      `input.blue[type=range][data-action="zoom"][min=${min}][max=${max}][step=${step}][value=${value}]`,
       this._el
     )
     input.ariaLabel = 'Scale image'
@@ -65,11 +67,11 @@ export class ZoomAction implements IAction {
     this.renderZoom(1)
     container.appendChild(this._el)
     this._unsub.push(
-      op.eventBus.subscribe('open', (paylod: ImageOpenEvent) => {
+      op.subscribe('open', (paylod: ImageOpenEvent) => {
         this._disabled = false
         this.renderZoom(paylod.ratio)
       }),
-      op.eventBus.subscribe('zoom', (paylod) => this.renderZoom(paylod.ratio))
+      op.subscribe('zoom', (paylod) => this.renderZoom(paylod.ratio))
     )
   }
   updateZoom(zoomLevel: number) {
