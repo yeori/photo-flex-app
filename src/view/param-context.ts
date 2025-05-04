@@ -1,4 +1,5 @@
 import { mergeParam } from '../merge-param'
+import { Viewport } from '../scale'
 import { ActionDefinition, ActionZoomParam, PhotoFlexInitParam } from '../types'
 
 const DefaultInit: Required<PhotoFlexInitParam> = {
@@ -7,7 +8,8 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
   scale: 'contain',
   wheelSensitivity: 0.002,
   actions: [
-    'open',
+    'file',
+    'camera',
     {
       id: 'resize',
       label: 'Resize',
@@ -21,6 +23,7 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
     'fit-contain',
     'fit-real',
     'zoom',
+    'capture',
   ],
   classnames: {
     prefix: 'photoflex',
@@ -29,6 +32,7 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
     canvas: 'canvas',
     toolbar: 'toolbar',
   },
+  handler: { name: (name, ext) => `${name}${ext}` },
   loadContext: (canvas) => canvas.getContext('2d')!,
 }
 
@@ -131,5 +135,19 @@ export class ParameterContext {
     let val = Math.max(min, scale)
     val = Math.min(max, val)
     return val
+  }
+  private parseFileName(fileName: string) {
+    let pos = fileName.lastIndexOf('.')
+    if (pos < 0) {
+      pos = fileName.length
+    }
+    const name = fileName.substring(0, pos)
+    const ext = fileName.substring(pos)
+    return { name, ext }
+  }
+  resolveFileName(fileName: string, viewport: Viewport) {
+    const nameHandler = this._param.handler?.name || DefaultInit.handler.name!
+    const { name, ext } = this.parseFileName(fileName)
+    return nameHandler(name, ext, viewport)
   }
 }

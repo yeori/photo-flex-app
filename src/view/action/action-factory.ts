@@ -8,6 +8,7 @@ import { ResizeAction } from './action-resize'
 import { ZoomAction } from './action-zoom'
 import { OpenAction } from './action-open'
 import { CaptureAction } from './action-capture'
+import { AbstractAction } from '.'
 
 export class ActionFactory {
   private _el: HTMLElement
@@ -52,6 +53,9 @@ export class ActionFactory {
         this.installAction(action)
       } else if (param.id === 'zoom') {
         this.installAction(new ZoomAction(this._ctx))
+      } else if (param instanceof AbstractAction) {
+        param.setContext(this._ctx)
+        this.installAction(param)
       }
     })
   }

@@ -1,9 +1,31 @@
+/**
+ * an action that can be performed within the application.
+ */
 export interface IAction {
+  /**
+   * Binds ui element(s) to a specific container.
+   * @param container - The HTML container element to bind to.
+   */
   bindTo(container: HTMLElement): void
+  /**
+   * The unique identifier of the action.
+   */
   id: string
+  /**
+   * The label or display name of the action.
+   */
   label: string
-  element: HTMLElement
+  /**
+   * The HTML element associated with the action.
+   */
+  readonly element: HTMLElement
+  /**
+   * Executes the action.
+   */
   run(): void
+  /**
+   * Optional method to dispose of any resources held by the action.
+   */
   dispose?(): void
 }
 /**
@@ -13,7 +35,6 @@ export type CssSelector = string
 export type ActionParam = {
   id: string
   label: string
-  selector?: CssSelector
 }
 
 export type ActionResizeParam = {
@@ -33,15 +54,18 @@ export type ActionZoomParam = {
   }[]
 }
 export type ActionDefinition =
-  | 'open'
+  | 'file'
+  | 'camera'
+  | 'capture'
   | 'resize'
-  | ActionResizeParam
-  | 'zoom'
-  | ActionZoomParam
   | 'fit-cover'
   | 'fit-contain'
   | 'fit-real'
+  | ActionResizeParam
+  | 'zoom'
+  | ActionZoomParam
   | ActionParam
+  | IAction
 /**
  * datanames for ui elements.
  *
@@ -61,6 +85,29 @@ export type DataNameParam = {
 export type PhotoflexSizeParam = {
   value: 'flud' | string
   resizable?: boolean
+}
+export type PhotoFlexHandlerParam = {
+  /**
+   * called when a new image is downloaded or captured
+   * ```
+   * ex) "your-img.png" => {name: "your-img", ext: ".png"}
+   * ```
+   * @returns a new filename
+   */
+  name?: (
+    /**
+     * `youer-img` in "your-img.png"
+     */
+    name: string,
+    /**
+     * `.png` in "your-img.png"
+     */
+    ext: string,
+    /**
+     * donwloaded(captured) image size in pixel
+     */
+    dim: { width: number; height: number }
+  ) => string
 }
 /**
  * initial configuration paramters
@@ -101,5 +148,6 @@ export type PhotoFlexInitParam = {
    * actions to be installed
    */
   actions?: ActionDefinition[]
+  handler?: PhotoFlexHandlerParam
   loadContext?: (canvas: HTMLCanvasElement) => CanvasRenderingContext2D
 }

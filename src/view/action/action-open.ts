@@ -10,23 +10,23 @@ export class OpenAction extends AbstractAction {
   private fileInput: HTMLInputElement | null = null
 
   constructor(
-    private readonly _ctx: PhotoFlexContext,
+    _ctx: PhotoFlexContext,
     private readonly type: 'file' | 'camera'
   ) {
     // Define action ID and default label
-    super({ id: type, label: 'Open' })
+    super({ id: type, label: 'Open' }, _ctx)
   }
 
   /**
    * Creates the button element for the action.
    */
-  protected createElement(): HTMLElement {
+  protected createElement<K extends HTMLElement>(): K {
     const label = this.type === 'file' ? 'Open Image' : 'Take Photo'
     const id = `photoflex-f-input-${this.type}`
     const icon = this.type === 'file' ? 'folder_open' : 'photo_camera'
     const capture = this.type === 'file' ? '' : 'environment'
     const labelEl =
-      dom.createFromHtml<HTMLLabelElement>(`<label  class="blue" tabindex=0 data-photoflex-action for="${id}" aria-label="${label}">
+      dom.createFromHtml<K>(`<label  class="blue" tabindex=0 data-photoflex-action for="${id}" aria-label="${label}">
   <input type="file" id="${id}" accept="image/*" ${
         capture && `capture="${capture}"`
       } data-photoflex-action title="${label}"></input>
@@ -54,7 +54,7 @@ export class OpenAction extends AbstractAction {
     })
     this.fileInput = fileInput
 
-    this._ctx.subscribe('open', () => {
+    this.context.subscribe('open', () => {
       fileInput.value = ''
     })
 
@@ -77,7 +77,7 @@ export class OpenAction extends AbstractAction {
       // Ensure the selected file is an image based on MIME type
       if (file.type.startsWith('image/')) {
         // Use the context's operator to open the image
-        this._ctx.op
+        this.context.op
           .openImage(file)
           .then(() => {
             console.log('Image opened successfully via operator.')

@@ -5,25 +5,23 @@ import { dom } from '../../util'
 
 export class ResizeAction extends AbstractAction {
   constructor(
-    private readonly _ctx: PhotoFlexContext,
+    _ctx: PhotoFlexContext,
     private options?: { width: number; height: number }[]
   ) {
-    super({ id: 'resize', label: 'Resize' })
+    super({ id: 'resize', label: 'Resize' }, _ctx)
   }
-  protected createElement(): HTMLElement {
+  protected createElement<K extends HTMLElement>(): K {
     const btn =
-      dom.createFromHtml<HTMLButtonElement>(`<button class="blue" data-photoflex-action aria-label="Resize viewport">
+      dom.createFromHtml<K>(`<button class="blue" data-photoflex-action aria-label="Resize viewport">
   <span class="material-symbols-outlined">aspect_ratio</span>
 </button>`)
-    // btn.disabled = true
-    this._ctx.subscribe('open', () => {
-      // btn.disabled = false
-      this._ctx.op.hideeModal()
+    this.context.subscribe('open', () => {
+      this.context.op.hideeModal()
     })
     return btn
   }
 
   run(): void {
-    this._ctx.op.showModal(new DimensionSelector(this._ctx, this.options))
+    this.context.op.showModal(new DimensionSelector(this.context, this.options))
   }
 }

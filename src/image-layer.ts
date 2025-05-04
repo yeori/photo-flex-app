@@ -12,11 +12,11 @@ export class ImageLayer {
   private constructor(
     public readonly uuid: string,
     private _image: ImageSource,
-    private readonly _resolveOrigin: CanvasOriginResolver,
+    private readonly _translateToSceen: CanvasOriginResolver,
     /**
-     * The origin of this layer. It is relative coord from center of viewport.
+     * logical center of this layer, relative to center of viewport.
      */
-    private _origin: Point,
+    private _center: Point,
     private _scale: number
   ) {
     this._area = this._captureArea()
@@ -28,14 +28,14 @@ export class ImageLayer {
     return this._scale
   }
   private _captureArea(): Area {
-    return (this._area = locateOnCenter(this._image, this._origin, this._scale))
+    return (this._area = locateOnCenter(this._image, this._center, this._scale))
   }
-  getOrigin(): Point {
-    return { ...this._origin }
+  getCenter(): Point {
+    return { ...this._center }
   }
-  setOrigin(x: number, y: number) {
-    this._origin.x = x
-    this._origin.y = y
+  setCenter(x: number, y: number) {
+    this._center.x = x
+    this._center.y = y
     this._captureArea()
   }
   /**
@@ -54,11 +54,26 @@ export class ImageLayer {
     this._scale = scale // Math.max(0.1, ratio)
     this._captureArea()
   }
+  private _drawCenter(ctx: CanvasRenderingContext2D) {
+    ctx.save()
+
+    {
+      ctx.beginPath()
+      const { x, y } = this._translateToSceen(this._center)
+      ctx.strokeStyle = 'black'
+      ctx.arc(x, y, 3, 0, 2 * Math.PI)
+      ctx.stroke()
+      ctx.closePath()
+    }
+
+    ctx.restore()
+  }
   draw(ctx: CanvasRenderingContext2D) {
     const { bitmap, x, y, width, height } = this._image
     const { _area: a } = this
-    const { x: cx, y: cy } = this._resolveOrigin(this._area)
-    ctx.drawImage(bitmap, x, y, width, height, cx, cy, a.width, a.height)
+    const { x: sx, y: sy } = this._translateToSceen(this._area)
+    ctx.drawImage(bitmap, x, y, width, height, sx, sy, a.width, a.height)
+    this._drawCenter(ctx)
   }
   static create(
     image: ImageSource,

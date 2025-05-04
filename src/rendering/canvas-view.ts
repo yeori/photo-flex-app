@@ -1,6 +1,6 @@
 import { IRenderer } from '.'
 import { ImageLayer } from '../image-layer'
-import { type Point } from '../scale'
+import { Viewport, type Point } from '../scale'
 import { PhotoFlexInitParam } from '../'
 import { dom } from '../util'
 import { PhotoFlexContext } from '../photo-flex-context'
@@ -54,6 +54,10 @@ export class CanvasRenderer implements IRenderer {
 
   get height() {
     return this._canvas.height / this._pixelRatio
+  }
+  get viewportSize(): Viewport {
+    const { width, height } = this
+    return { width, height }
   }
 
   get ctxContext() {
@@ -113,12 +117,12 @@ export class CanvasRenderer implements IRenderer {
   }
 
   getLayerOrigins(): Point[] {
-    return this.layers.map((layer) => Object.assign({}, layer.getOrigin()))
+    return this.layers.map((layer) => Object.assign({}, layer.getCenter()))
   }
 
   setLayerOrigin(index: number, x: number, y: number): void {
     if (index >= 0 && index < this.layers.length) {
-      this.layers[index].setOrigin(x, y)
+      this.layers[index].setCenter(x, y)
     }
   }
   private _resize(

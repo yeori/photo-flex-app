@@ -1,4 +1,4 @@
-export type Unsubscriber = () => void
+import { Unsubscriber } from '../event'
 
 export class EventUtil {
   /**

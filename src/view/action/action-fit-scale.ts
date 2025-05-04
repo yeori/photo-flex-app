@@ -15,15 +15,18 @@ export class ActionFitCover extends AbstractAction {
   }
   private _unsub: Unsubscriber | undefined
   constructor(
-    private readonly _ctx: PhotoFlexContext,
+    _ctx: PhotoFlexContext,
     private readonly scale: 'cover' | 'contain' | 'real'
   ) {
-    super({
-      id: `fit-${scale}`,
-      label: labels[scale],
-    })
+    super(
+      {
+        id: `fit-${scale}`,
+        label: labels[scale],
+      },
+      _ctx
+    )
   }
-  protected createElement(): HTMLElement {
+  protected createElement<K extends HTMLElement>(): K {
     const btn =
       dom.createFromHtml<HTMLButtonElement>(`<button class="blue" data-photoflex-action aria-label="${
         this.label
@@ -31,18 +34,15 @@ export class ActionFitCover extends AbstractAction {
       <span class="material-symbols-outlined">${this.icons[this.scale]}</span>
     </button>`)
     btn.disabled = true
-    this._unsub = this._ctx.subscribe('open', () => {
-      btn.disabled = false
-    })
-    return btn
+    return btn as unknown as K
   }
   run(): void {
     if (this.scale === 'contain') {
-      this._ctx.op.fitByContain()
+      this.context.op.fitByContain()
     } else if (this.scale === 'cover') {
-      this._ctx.op.fitByCover()
+      this.context.op.fitByCover()
     } else if (this.scale === 'real') {
-      this._ctx.op.fitToRealSize()
+      this.context.op.fitToRealSize()
     } else {
       throw new Error('check scaleMode: ' + this.scale)
     }

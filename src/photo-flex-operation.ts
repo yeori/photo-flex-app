@@ -5,7 +5,7 @@ import {
   PhotoFlexEvent,
   Viewport,
 } from './photo-flex'
-import { Unsubscriber } from './util/event-util'
+import { Unsubscriber } from './event'
 
 export interface IPhotoFlexOp {
   viewportSize: Viewport

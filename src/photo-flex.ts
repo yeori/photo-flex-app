@@ -345,24 +345,29 @@ export class PhotoFlex implements Viewport {
     scaleResolver: (layer: ImageLayer) => { ratio: number; origin?: Point }
   ) {
     this._canvasView.getLayers().forEach((layer) => {
-      const { ratio, origin } = scaleResolver(layer)
+      let { ratio, origin } = scaleResolver(layer)
       const { uuid } = layer
-      layer.setScale(this._paramContext.resolveScale(ratio))
+      const newRatio = this._paramContext.resolveScale(ratio)
+      if (!origin) {
+        const scale = newRatio / layer.ratio
+        origin = layer.getCenter()
+        origin.x *= scale
+        origin.y *= scale
+      }
+      layer.setScale(newRatio)
+      layer.setCenter(origin.x, origin.y)
       this._eventBus.emit('zoom', {
         ratio,
         layer: uuid,
       })
-      if (origin) {
-        layer.setOrigin(origin.x, origin.y)
-        const { width, height } = layer.image
-        this._eventBus.emit('move', {
-          cx: origin.x,
-          cy: origin.y,
-          width,
-          height,
-          layer: uuid,
-        })
-      }
+      const { width, height } = layer.image
+      this._eventBus.emit('move', {
+        cx: origin.x,
+        cy: origin.y,
+        width,
+        height,
+        layer: uuid,
+      })
     })
     this.repaint()
   }
@@ -377,10 +382,10 @@ export class PhotoFlex implements Viewport {
     }))
   }
   fitBy(scale: 'cover' | 'contain') {
-    const origin = { x: 0, y: 0 } as Point
+    const center = { x: 0, y: 0 } as Point
     this._updateZoom((layer) => ({
       ratio: this._calculateScale(layer.image, scale),
-      origin,
+      origin: center,
     }))
   }
   fitToRealSize(): void {
@@ -412,11 +417,14 @@ export class PhotoFlex implements Viewport {
     link.download = name
     link.click()
   }
-
   private async _capture(type: 'dataurl'): Promise<CaptureEvent> {
     const { imageURL, name } = await this._canvasView.capture()
     const length = dom.image.inferSize(imageURL)
-    return { image: imageURL, type, name, length }
+    const fileName = this._paramContext.resolveFileName(
+      name,
+      this._canvasView.viewportSize
+    )
+    return { image: imageURL, type, name: fileName, length }
   }
 
   /**
@@ -442,3 +450,4 @@ export * from './types'
 export * from './rendering'
 export { ImageLayer, ImageSource, IPhotoFlexOp, ScaleMode, Viewport, Point }
 export * from './event'
+export * from './view'
