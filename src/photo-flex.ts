@@ -424,7 +424,8 @@ export class PhotoFlex implements Viewport {
       name,
       this._canvasView.viewportSize
     )
-    return { image: imageURL, type, name: fileName, length }
+    const dimension = this._canvasView.viewportSize
+    return { image: imageURL, type, name: fileName, length, dimension }
   }
 
   /**

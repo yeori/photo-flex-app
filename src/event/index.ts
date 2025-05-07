@@ -43,6 +43,7 @@ export type CaptureEvent = {
    * file length in bytes
    */
   length: number
+  dimension: { width: number; height: number }
 }
 /**
  * PhotoFlex event list
