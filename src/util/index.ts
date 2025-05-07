@@ -260,7 +260,9 @@ export class DomUtil {
     return [Number(m[1]), m[2]]
   }
   randomKey() {
-    return crypto.randomUUID ? crypto.randomUUID() : rand(2)
+    return typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : rand(2)
   }
   /**
    * apply styles to the element

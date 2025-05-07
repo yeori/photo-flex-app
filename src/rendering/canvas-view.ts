@@ -168,7 +168,7 @@ export class CanvasRenderer implements IRenderer {
     const ctx = buffer.getContext('2d')!
     const layer = this.getFirstLayer()!
     layer.draw(ctx)
-    const { mimeType, name } = layer.image
+    const { mimeType, uuid: name } = layer.image
     const imageURL = buffer.toDataURL(mimeType)
     return { imageURL, name }
   }

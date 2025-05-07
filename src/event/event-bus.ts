@@ -7,6 +7,7 @@ import {
   PhotoFlexEvent,
   ViewportEvent,
   CaptureEvent,
+  SourceEvent,
 } from '.'
 
 export type PhotoFlexEventMap = {
@@ -15,6 +16,7 @@ export type PhotoFlexEventMap = {
   open: ImageOpenEvent
   'viewport:resize': ViewportEvent
   capture: CaptureEvent
+  source: SourceEvent
 }
 
 export class EventBus {

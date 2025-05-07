@@ -1,7 +1,7 @@
 import { ImageSource } from './image-source'
 import { locateOnCenter } from './locator/locate-on-center'
 import { CanvasOriginResolver } from './rendering/canvas-view'
-import { Point, Area } from './scale'
+import { Point, Area, ImageCacheParam } from './scale'
 import { dom } from './util'
 
 /**
@@ -37,6 +37,15 @@ export class ImageLayer {
     this._center.x = x
     this._center.y = y
     this._captureArea()
+  }
+  replaceImageSource(source: ImageSource): ImageCacheParam | undefined {
+    let cache: ImageCacheParam | undefined = undefined
+    if (this._image) {
+      const { _center: center, _scale: scale, _image: image } = this
+      cache = { center, scale, imageUuid: image.uuid }
+    }
+    this._image = source
+    return cache
   }
   /**
    * It changes the scale ratio of this layer.

@@ -46,6 +46,37 @@ export type CaptureEvent = {
   dimension: { width: number; height: number }
 }
 /**
+ * the types of events that can be emitted by the SourceManager.
+ */
+export type SourceEventType =
+  | 'added'
+  | 'activated'
+  | 'deactivated'
+  | 'deleted'
+  | 'error'
+
+/**
+ * Represents an event related to the SourceManager.
+ */
+export type SourceEvent = {
+  /**
+   * The specific type of source event.
+   */
+  type: SourceEventType
+  /**
+   * An array of ImageSources, used for 'added' if multiple sources are added at once.
+   */
+  sources?: ImageSource[]
+  /**
+   * The error object, only present if type is 'error'.
+   */
+  error?: any
+  /**
+   * Provided when the type is `added`.
+   */
+  files?: File[]
+}
+/**
  * PhotoFlex event list
  * ```
  * zoom - zool level changed
@@ -60,5 +91,6 @@ export type PhotoFlexEvent =
   | 'open'
   | 'viewport:resize'
   | 'capture'
+  | 'source'
 export type Unsubscriber = () => void
 export { EventBus } from './event-bus'

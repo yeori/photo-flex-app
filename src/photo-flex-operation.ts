@@ -48,7 +48,7 @@ export interface IPhotoFlexOp {
   fitByContain(): void
   /** Sets the zoom level to the photo's original size. */
   fitToRealSize(): void
-  openImage(file: File): Promise<void>
+  openImage(files: File[]): Promise<void>
   /**
    * text form for current zoom level
    * @param metric
@@ -119,8 +119,8 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   fitToRealSize(): void {
     this.target.fitToRealSize()
   }
-  openImage(file: File): Promise<void> {
-    return this.target.setImage(file)
+  openImage(files: File[]): Promise<void> {
+    return this.target.setImage(files)
   }
   getZoomText<K extends keyof ZoomValueMap>(metric: K): ZoomValueMap[K] {
     const zoomLevle = this.target.getZoomLevel()

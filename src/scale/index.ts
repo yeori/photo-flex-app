@@ -19,3 +19,9 @@ export const raitioResolvers: Record<
   contain: scaleByContain,
   cover: scaleByCover,
 }
+
+export type ImageCacheParam = {
+  imageUuid: string
+  center: Point
+  scale: number
+}

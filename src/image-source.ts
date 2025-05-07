@@ -1,12 +1,15 @@
 import { Viewport } from './scale'
+import { dom } from './util'
 
 export class ImageSource implements Viewport {
   private _map: ImageBitmap | undefined
+  private _uuid: string
   constructor(
     _map: ImageBitmap,
     readonly meta: { name: string; size: number; type: string }
   ) {
     this._map = _map
+    this._uuid = dom.randomKey()
   }
   get bitmap() {
     return this._map!
@@ -22,6 +25,9 @@ export class ImageSource implements Viewport {
   }
   get height(): number {
     return this._map ? this._map.height : 0
+  }
+  get uuid() {
+    return this._uuid
   }
   /**
    * File name
@@ -43,6 +49,9 @@ export class ImageSource implements Viewport {
   }
   get type(): string {
     return this.meta.type
+  }
+  equals(other: ImageSource) {
+    return other && other.uuid === this.uuid
   }
   destroy(): void {
     if (this._map) {

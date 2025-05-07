@@ -3,10 +3,13 @@ import type { EventBus, PhotoFlexEvent, Unsubscriber } from './event'
 import type { IPhotoFlexOp } from './photo-flex-operation'
 import type { Viewport } from './scale'
 import { type ParameterContext } from './view/param-context'
-import { PhotoFlexEventMap } from './event/event-bus'
+import { type PhotoFlexEventMap } from './event/event-bus'
+import { type ImageSource } from './image-source'
+import { type PhotoFlex } from './photo-flex'
 
 export class PhotoFlexContext {
   constructor(
+    private readonly _flex: PhotoFlex,
     private readonly _op: IPhotoFlexOp,
     private readonly _paramContext: ParameterContext
   ) {}
@@ -27,6 +30,9 @@ export class PhotoFlexContext {
   }
   get paramContext(): ParameterContext {
     return this._paramContext
+  }
+  setActiveImage(source: ImageSource) {
+    this._flex.setActiveImage(source)
   }
   resolveDataName(viewType: keyof DataNameParam) {
     const { parameter } = this._paramContext

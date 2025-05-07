@@ -1,4 +1,3 @@
-// Suggested code may be subject to a license. Learn more: ~LicenseLog:3840367711.
 import { type PhotoFlexInitParam } from './types'
 import { DndContext } from './dnd/dnd-context'
 import { ImageSource } from './image-source'
@@ -21,6 +20,8 @@ import { AfterImageView } from './view/after-image-view'
 import { bindDimension } from './bind-dimension'
 import { ParameterContext } from './view/param-context'
 import { CaptureEvent } from './event'
+import { SourceManager } from './source-manager' // Import SourceManager
+import { ImageSourceView } from './view/image-source-view'
 
 /**
  * Main class for photo flex.
@@ -38,7 +39,9 @@ export class PhotoFlex implements Viewport {
   private _photoFlexContext: PhotoFlexContext
   private _canvasView: CanvasRenderer
   private _afterImageView: AfterImageView
+  private _imageSourceView: ImageSourceView
   private _modalUI?: ModalUI
+  private _sourceManager: SourceManager // Add SourceManager
 
   /**
    * Constructor for PhotoFlex.
@@ -50,6 +53,7 @@ export class PhotoFlex implements Viewport {
     this._paramContext = new ParameterContext(param)
     this._operator = new PhotoFlexOp(this, this._eventBus)
     const ctx = (this._photoFlexContext = new PhotoFlexContext(
+      this,
       this._operator,
       this._paramContext
     ))
@@ -89,6 +93,8 @@ export class PhotoFlex implements Viewport {
     )
     this._afterImageView = new AfterImageView(this._photoFlexContext)
     this._afterImageView.bindTo(this._boardEl)
+    this._imageSourceView = new ImageSourceView(this._photoFlexContext)
+    this._imageSourceView.bindTo(el)
 
     this._dnd = new DndContext(this._canvasView.canvas, {
       translate: (_, x, y) => ({
@@ -103,6 +109,7 @@ export class PhotoFlex implements Viewport {
     this._actionFactory.installActions(this._paramContext.actions)
     this._wheelControl = new WheelController(this._photoFlexContext)
     this._wheelControl.bindTo(this._boardEl)
+    this._sourceManager = new SourceManager(this._photoFlexContext)
     this._dnd.addDragListener(new ImageDragger(this))
     this._dnd.addPinchListener(new ZoomByPinch(this))
 
@@ -226,18 +233,8 @@ export class PhotoFlex implements Viewport {
       console.log('[DROP]')
 
       if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
-        const file = event.dataTransfer.files[0]
-        console.log(`File dropped: ${file.name}, type: ${file.type}`)
-
-        if (file.type.startsWith('image/')) {
-          try {
-            this.operator.openImage(file)
-          } catch (error) {
-            console.error('Error opening dropped image:', error)
-          }
-        } else {
-          console.warn('Dropped file is not an image:', file.type)
-        }
+        const files = Array.from(event.dataTransfer.files)
+        this.setImage(files) // Use openImage with File[]
         event.dataTransfer.clearData()
       } else {
         console.log('No files found in drop event dataTransfer.')
@@ -260,7 +257,6 @@ export class PhotoFlex implements Viewport {
 
     return { dispose }
   }
-
   getLayers(): ImageLayer[] {
     return this._canvasView.getLayers()
   }
@@ -317,10 +313,87 @@ export class PhotoFlex implements Viewport {
       ? this._paramContext.ratio
       : ratioResolvers[scaleMode](source, this)
   }
-  async setImage(file: File, clear: boolean = true): Promise<void> {
-    const source = await ImageSource.fromFile(file)
-    const ratio: number = this._calculateScale(source)
-    const origin = { x: 0, y: 0 }
+  public setActiveImage(source: ImageSource) {
+    const layer = this._canvasView.getFirstLayer()
+    if (layer) {
+      const center = layer.getCenter()
+      let { image, ratio } = layer
+      this._sourceManager.write({ imageUuid: image.uuid, center, scale: ratio })
+      layer.replaceImageSource(source)
+      const param = this._sourceManager.setActiveSource(source)
+      if (param) {
+        const { center, scale } = param
+        layer.setScale(scale)
+        layer.setCenter(center.x, center.y)
+        ratio = scale
+        this._eventBus.emit('move', {
+          cx: center.x,
+          cy: center.y,
+          width: source.width,
+          height: source.height,
+          layer: layer.uuid,
+        })
+        this._eventBus.emit('zoom', {
+          ratio: ratio,
+          layer: layer.uuid,
+        })
+      }
+
+      this.repaint()
+      this._eventBus.emit('source', {
+        type: 'activated',
+        sources: [source],
+      })
+      this._eventBus.emit('open', {
+        image: source,
+        ratio,
+      })
+    }
+  }
+  private async _fileToImage(files: File[]) {
+    const sources: ImageSource[] = []
+    for (const file of files) {
+      try {
+        const source = await ImageSource.fromFile(file)
+        sources.push(source)
+      } catch (error) {
+        console.error(
+          `PhotoFlex.setImage: Error processing file ${file.name}:`,
+          error
+        )
+      }
+    }
+    return sources
+  }
+  async setImage(files: File[], clear: boolean = true): Promise<void> {
+    if (!files || files.length === 0) {
+      console.warn('PhotoFlex.setImage: No files provided.')
+      return
+    }
+
+    const sources: ImageSource[] = await this._fileToImage(files)
+    if (sources.length === 0) {
+      console.warn('PhotoFlex.setImage: No valid image files provided.')
+      return
+    }
+    this._sourceManager.addSources(sources, files)
+
+    for (const source of sources) {
+      this._sourceManager.write({
+        imageUuid: source.uuid,
+        center: { x: 0, y: 0 },
+        scale: this._calculateScale(source),
+      })
+    }
+
+    const source = sources[0]
+    // const ratio: number = this._calculateScale(source)
+    // const origin = { x: 0, y: 0 }
+    const { center: origin, scale: ratio } = this._sourceManager.read(
+      source.uuid
+    )!
+    this._sourceManager.setActiveSource(source)
+
     const layer = ImageLayer.create(
       source,
       this._canvasView.originReslover,
@@ -332,6 +405,10 @@ export class PhotoFlex implements Viewport {
     }
     this._canvasView.addLayer(layer)
     this.repaint()
+    this._eventBus.emit('source', {
+      type: 'activated',
+      sources,
+    })
     this._eventBus.emit('open', {
       image: source,
       ratio,
