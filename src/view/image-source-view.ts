@@ -16,7 +16,7 @@ export class ImageSourceView implements IView {
   private _activeSource: ImageSource | undefined
   private templates = {
     menu: `<menu data-photoflex-image-sources><li>close</li><div class="inner"></div></menu>`,
-    item: `<li data-photoflex-image-item></li>`,
+    item: `<li tabindex="0" role="button" data-photoflex-image-item></li>`,
     close: `<button data-photoflex-action><span class="material-symbols-outlined">close</span></button>`,
   }
   constructor(private readonly _ctx: PhotoFlexContext) {

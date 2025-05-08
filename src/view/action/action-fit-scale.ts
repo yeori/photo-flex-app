@@ -1,12 +1,8 @@
 import { AbstractAction } from '.'
 import { Unsubscriber } from '../../event'
 import type { PhotoFlexContext } from '../../photo-flex-context'
+import { ActionParam } from '../../types'
 import { dom } from '../../util'
-const labels = {
-  cover: 'Fit cover',
-  contain: 'Fit contain',
-  real: '100% size',
-}
 export class ActionFitCover extends AbstractAction {
   private readonly icons: Record<string, string> = {
     cover: 'fullscreen',
@@ -16,15 +12,10 @@ export class ActionFitCover extends AbstractAction {
   private _unsub: Unsubscriber | undefined
   constructor(
     _ctx: PhotoFlexContext,
-    private readonly scale: 'cover' | 'contain' | 'real'
+    private readonly scale: 'cover' | 'contain' | 'real',
+    param: ActionParam
   ) {
-    super(
-      {
-        id: `fit-${scale}`,
-        label: labels[scale],
-      },
-      _ctx
-    )
+    super(param, _ctx)
   }
   protected createElement<K extends HTMLElement>(): K {
     const btn =

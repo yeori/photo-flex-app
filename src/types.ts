@@ -16,6 +16,10 @@ export interface IAction {
    */
   label: string
   /**
+   * The tooltip text for the action.
+   */
+  tooltip?: string; // Add optional tooltip property
+  /**
    * The HTML element associated with the action.
    */
   readonly element: HTMLElement
@@ -35,12 +39,14 @@ export type CssSelector = string
 export type ActionParam = {
   id: string
   label: string
+  tooltip?: string; // Add optional tooltip property
 }
 
 export type ActionResizeParam = {
   id: 'resize'
   label: string
   options: { width: number; height: number }[]
+  tooltip?: string; // Add optional tooltip property
 }
 
 export type ActionZoomParam = {
@@ -52,6 +58,7 @@ export type ActionZoomParam = {
     step: number
     value: number
   }[]
+  tooltip?: string; // Add optional tooltip property
 }
 export type ActionDefinition =
   | 'file'

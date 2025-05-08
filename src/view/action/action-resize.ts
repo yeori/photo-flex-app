@@ -1,14 +1,14 @@
 import { AbstractAction } from '.'
 import { DimensionSelector } from '../../component/dimension-selector'
 import { PhotoFlexContext } from '../../photo-flex-context'
+import { ActionResizeParam } from '../../types'
 import { dom } from '../../util'
 
 export class ResizeAction extends AbstractAction {
-  constructor(
-    _ctx: PhotoFlexContext,
-    private options?: { width: number; height: number }[]
-  ) {
-    super({ id: 'resize', label: 'Resize' }, _ctx)
+  options: { width: number; height: number }[]
+  constructor(_ctx: PhotoFlexContext, param: ActionResizeParam) {
+    super(param, _ctx)
+    this.options = param.options!
   }
   protected createElement<K extends HTMLElement>(): K {
     const btn =

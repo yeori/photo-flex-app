@@ -22,6 +22,7 @@ import { ParameterContext } from './view/param-context'
 import { CaptureEvent } from './event'
 import { SourceManager } from './source-manager' // Import SourceManager
 import { ImageSourceView } from './view/image-source-view'
+import { TooltipView } from './view/tooltip/tooltip-view'
 
 /**
  * Main class for photo flex.
@@ -40,6 +41,7 @@ export class PhotoFlex implements Viewport {
   private _canvasView: CanvasRenderer
   private _afterImageView: AfterImageView
   private _imageSourceView: ImageSourceView
+  private _tooltipView: TooltipView
   private _modalUI?: ModalUI
   private _sourceManager: SourceManager // Add SourceManager
 
@@ -95,6 +97,8 @@ export class PhotoFlex implements Viewport {
     this._afterImageView.bindTo(this._boardEl)
     this._imageSourceView = new ImageSourceView(this._photoFlexContext)
     this._imageSourceView.bindTo(el)
+    this._tooltipView = new TooltipView(this._photoFlexContext)
+    this._tooltipView.bindTo(el)
 
     this._dnd = new DndContext(this._canvasView.canvas, {
       translate: (_, x, y) => ({

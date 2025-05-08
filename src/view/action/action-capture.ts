@@ -1,14 +1,14 @@
 import { AbstractAction } from '.'
 import { PhotoFlexContext } from '../../photo-flex-context'
+import { ActionParam } from '../../types'
 import { dom } from '../../util'
 
 /**
  * Action to capture the current viewport content and trigger download.
  */
 export class CaptureAction extends AbstractAction {
-  constructor(_ctx: PhotoFlexContext) {
-    // Inject context
-    super({ id: 'capture', label: 'Capture' }, _ctx)
+  constructor(_ctx: PhotoFlexContext, param: ActionParam) {
+    super(param, _ctx)
   }
 
   protected createElement<K extends HTMLElement>(): K {

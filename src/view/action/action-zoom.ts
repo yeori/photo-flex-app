@@ -4,16 +4,14 @@ import { PhotoFlexContext } from '../../photo-flex-context'
 import { dom } from '../../util'
 
 export class ZoomAction implements IAction {
-  private _param: ActionParam
   private _el: HTMLDivElement
   private _unsub: Unsubscriber[] = []
   private _disabled: boolean = true
 
-  constructor(private readonly _ctx: PhotoFlexContext) {
-    this._param = {
-      id: 'zoom',
-      label: 'zoom',
-    }
+  constructor(
+    private readonly _ctx: PhotoFlexContext,
+    private readonly _param: ActionParam
+  ) {
     this._el = dom.create<HTMLDivElement>('div.blue[data-photoflex-action]')
     this._el.id = this.id
     dom.style(this._el, {

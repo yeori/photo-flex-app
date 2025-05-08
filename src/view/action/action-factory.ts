@@ -1,9 +1,8 @@
-import { IAction } from '../../types'
+import { ActionZoomParam, IAction } from '../../types'
 import { PhotoFlexContext } from '../../photo-flex-context'
 import { ActionDefinition, ActionResizeParam } from '../../types'
 import { dom } from '../../util'
 import { ActionFitCover } from './action-fit-scale'
-import { ActionMove } from './action-move'
 import { ResizeAction } from './action-resize'
 import { ZoomAction } from './action-zoom'
 import { OpenAction } from './action-open'
@@ -25,15 +24,32 @@ export class ActionFactory {
     this._defaultActions.set(action.id, action)
   }
   private _installDefaultActions() {
-    this._addToMap(new OpenAction(this._ctx, 'file'))
-    this._addToMap(new OpenAction(this._ctx, 'camera'))
-    this._addToMap(new ActionMove(this._ctx))
-    this._addToMap(new ResizeAction(this._ctx))
-    this._addToMap(new ZoomAction(this._ctx))
-    this._addToMap(new ActionFitCover(this._ctx, 'cover'))
-    this._addToMap(new ActionFitCover(this._ctx, 'contain'))
-    this._addToMap(new ActionFitCover(this._ctx, 'real'))
-    this._addToMap(new CaptureAction(this._ctx))
+    const { paramContext: pctx } = this._ctx
+    this._addToMap(new OpenAction(this._ctx, pctx.getDefaultAction('file')))
+    this._addToMap(new OpenAction(this._ctx, pctx.getDefaultAction('camera')))
+    this._addToMap(
+      new ResizeAction(
+        this._ctx,
+        pctx.getDefaultAction('resize') as ActionResizeParam
+      )
+    )
+    this._addToMap(new ZoomAction(this._ctx, pctx.getDefaultAction('zoom')))
+    this._addToMap(
+      new ActionFitCover(this._ctx, 'cover', pctx.getDefaultAction('fit-cover'))
+    )
+    this._addToMap(
+      new ActionFitCover(
+        this._ctx,
+        'contain',
+        pctx.getDefaultAction('fit-contain')
+      )
+    )
+    this._addToMap(
+      new ActionFitCover(this._ctx, 'real', pctx.getDefaultAction('fit-real'))
+    )
+    this._addToMap(
+      new CaptureAction(this._ctx, pctx.getDefaultAction('capture'))
+    )
   }
   installActions(params: ActionDefinition[]) {
     params.forEach((param) => {
@@ -48,11 +64,10 @@ export class ActionFactory {
           )
         }
       } else if (param.id === 'resize') {
-        const { options } = param as ActionResizeParam
-        const action = new ResizeAction(this._ctx, options)
+        const action = new ResizeAction(this._ctx, param as ActionResizeParam)
         this.installAction(action)
       } else if (param.id === 'zoom') {
-        this.installAction(new ZoomAction(this._ctx))
+        this.installAction(new ZoomAction(this._ctx, param as ActionZoomParam))
       } else if (param instanceof AbstractAction) {
         param.setContext(this._ctx)
         this.installAction(param)

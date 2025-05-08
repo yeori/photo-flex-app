@@ -93,37 +93,39 @@
     font-size: 1rem;
   }
 }
-[data-photoflex-action].white {
-  background-color: white;
-  color: #444;
-  &:hover {
-    background-color: #eee;
+[data-photoflex-action] {
+  &.white {
+    background-color: white;
+    color: #444;
+    &:hover {
+      background-color: #eee;
+    }
+    &:disabled {
+      color: #999;
+      background-color: #d0d0d0;
+    }
+    &:focus {
+      outline-color: #ababab;
+    }
+    &:focus-visible {
+      outline-color: #999;
+    }
   }
-  &:disabled {
-    color: #999;
-    background-color: #d0d0d0;
-  }
-  &:focus {
-    outline-color: #ababab;
-  }
-  &:focus-visible {
-    outline-color: #999;
-  }
-}
-[data-photoflex-action].blue {
-  background-color: #007bff;
-  color: white;
-  &:hover {
-    background-color: #0056b3;
-  }
-  &:disabled {
-    background-color: #a0c4ff;
-  }
-  &:focus {
-    outline-color: #007bffa0;
-  }
-  &:focus-visible {
-    outline-color: #003873;
+  &.blue {
+    background-color: #007bff;
+    color: white;
+    &:hover {
+      background-color: #0056b3;
+    }
+    &:disabled {
+      background-color: #a0c4ff;
+    }
+    &:focus {
+      outline-color: #007bffa0;
+    }
+    &:focus-visible {
+      outline-color: #003873;
+    }
   }
 }
 
@@ -217,4 +219,26 @@
     top: 6px;
     right: 6px;
   }
+}
+[data-photoflex-tooltip-box] {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 0px;
+  height: 0px;
+  pointer-events: none;
+  overflow: hidden;
+}
+[data-photoflex-tooltip-item] {
+  position: fixed;
+  background-color: rgb(51, 51, 51);
+  color: rgb(255, 255, 255);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.2s ease-in-out;
+  white-space: nowrap;
 }

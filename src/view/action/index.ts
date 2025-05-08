@@ -26,6 +26,7 @@ export abstract class AbstractAction implements IAction {
     if (!el.ariaLabel) {
       el.ariaLabel = this.label
     }
+    this._ctx!.paramContext.bindTooltip(el, this.param)
     el.addEventListener('click', () => {
       this.run()
     })

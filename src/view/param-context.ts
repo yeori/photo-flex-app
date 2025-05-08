@@ -1,6 +1,51 @@
 import { mergeParam } from '../merge-param'
 import { Viewport } from '../scale'
-import { ActionDefinition, ActionZoomParam, PhotoFlexInitParam } from '../types'
+import {
+  ActionDefinition,
+  ActionParam,
+  ActionResizeParam,
+  ActionZoomParam,
+  PhotoFlexInitParam,
+} from '../types'
+
+const DefaultActionParams: Record<string, ActionParam> = {
+  file: { id: 'file', label: 'Image', tooltip: 'Open image file(s)' },
+  camera: {
+    id: 'camera',
+    label: 'Camera',
+    tooltip: 'Take a photo',
+  },
+  resize: {
+    id: 'resize',
+    label: 'Resize',
+    options: [
+      { width: 320, height: 320 },
+      { width: 480, height: 480 },
+      { width: 640, height: 640 },
+    ],
+  } as ActionResizeParam,
+  'fit-cover': {
+    id: 'fit-cover',
+    label: 'Cover',
+    tooltip: 'Cover viewport',
+  },
+  'fit-contain': {
+    id: 'fit-contain',
+    label: 'Fit Contain',
+    tooltip: 'Fit within viewport',
+  },
+  'fit-real': {
+    id: 'fit-real',
+    label: 'Actual Size',
+    tooltip: '100% size',
+  },
+  zoom: { id: 'zoom', label: 'Zoom', tooltip: 'Adjust zoom level' },
+  capture: {
+    id: 'capture',
+    label: 'Capture',
+    tooltip: 'Capture Viewport',
+  },
+}
 
 const DefaultInit: Required<PhotoFlexInitParam> = {
   width: '400px',
@@ -8,22 +53,14 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
   scale: 'contain',
   wheelSensitivity: 0.002,
   actions: [
-    'file',
-    'camera',
-    {
-      id: 'resize',
-      label: 'Resize',
-      options: [
-        { width: 320, height: 320 },
-        { width: 480, height: 480 },
-        { width: 640, height: 640 },
-      ],
-    },
-    'fit-cover',
-    'fit-contain',
-    'fit-real',
-    'zoom',
-    'capture',
+    DefaultActionParams.file,
+    DefaultActionParams.camera,
+    DefaultActionParams.resize,
+    DefaultActionParams['fit-cover'],
+    DefaultActionParams['fit-contain'],
+    DefaultActionParams['fit-real'],
+    DefaultActionParams.zoom,
+    DefaultActionParams.capture,
   ],
   classnames: {
     prefix: 'photoflex',
@@ -73,6 +110,15 @@ export class ParameterContext {
     } else {
       return scale
     }
+  }
+  get defaultResizeParam(): ActionResizeParam {
+    const action = DefaultInit.actions.find(
+      (action) => typeof action !== 'string' && action.id === 'resize'
+    )
+    if (!action) {
+      throw new Error('no DefaultResizeParam found')
+    }
+    return action as ActionResizeParam
   }
   private _setSizeAt(target: 'width' | 'height', value: number) {
     const elem = this._param[target]!
@@ -130,6 +176,27 @@ export class ParameterContext {
       return (zoom as ActionZoomParam).options?.[0] || DefaultZoomActionOption
     }
   }
+  /**
+   * find default action for the action id
+   * @param defintion action id
+   */
+  getDefaultAction(defintion: ActionDefinition): ActionParam {
+    if (typeof defintion === 'string') {
+      const defaultParam = DefaultActionParams[defintion]
+      if (!defaultParam) {
+        throw new Error(`Unknown default action id: ${defintion}`)
+      }
+      return { ...defaultParam } // Return a copy
+    } else if ('id' in defintion && typeof defintion.id === 'string') {
+      const defaultParam = DefaultActionParams[defintion.id]
+      if (defaultParam) {
+        return { ...defaultParam, ...defintion }
+      }
+      return { ...defintion }
+    } else {
+      throw new Error(`Invalid action definition type: ${typeof defintion}`)
+    }
+  }
   resolveScale(scale: number): number {
     const { min, max } = this.getOptionForZoomAction()
     let val = Math.max(min, scale)
@@ -149,5 +216,9 @@ export class ParameterContext {
     const nameHandler = this._param.handler?.name || DefaultInit.handler.name!
     const { name, ext } = this.parseFileName(fileName)
     return nameHandler(name, ext, viewport)
+  }
+
+  bindTooltip(el: HTMLElement, param: ActionParam) {
+    el.dataset.photoflexTooltip = param.tooltip || param.label
   }
 }
