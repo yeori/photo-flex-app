@@ -84,6 +84,9 @@ export class ImageLayer {
     ctx.drawImage(bitmap, x, y, width, height, sx, sy, a.width, a.height)
     this._drawCenter(ctx)
   }
+  clear() {
+    this._image.destroy()
+  }
   static create(
     image: ImageSource,
     originResolver: CanvasOriginResolver,

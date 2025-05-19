@@ -71,6 +71,9 @@ export class CanvasRenderer implements IRenderer {
   get ctx() {
     return this._ctx
   }
+  isEmpty() {
+    return this.layers.length === 0
+  }
   setCursor(cursorName: string) {
     this._canvas.style.cursor = cursorName
   }
@@ -91,6 +94,15 @@ export class CanvasRenderer implements IRenderer {
 
   getLayers(): ImageLayer[] {
     return this.layers
+  }
+  removeLayerBy(predicate: (layer: ImageLayer) => boolean) {
+    const index = this.layers.findIndex(predicate)
+    if (index < 0) {
+      return false
+    }
+    const [layer] = this.layers.splice(index, 1)
+    layer.clear()
+    return true
   }
   removeLayers() {
     this.layers = []

@@ -28,10 +28,16 @@ export class AfterImageView implements IView {
     _ctx.subscribe('zoom', (payload) => {
       const layer: ImageLayer = this._ctx.op.getLayer(payload.layer)
       const { width, height } = layer.image
-      this._render(width, height)
+      this._render(width, height, layer.image)
     })
     _ctx.subscribe('move', (payload) => {
       this._setOrigin(payload.cx, payload.cy)
+    })
+    _ctx.subscribe('source', (payload) => {
+      const { type } = payload
+      if (type === 'deleted') {
+        this._render(0, 0)
+      }
     })
   }
   private _setOrigin(x: number, y: number) {
@@ -40,12 +46,12 @@ export class AfterImageView implements IView {
     })
   }
   private _render(width: number, height: number, image?: ImageSource) {
+    const ctx = this._canvas.getContext('2d')!
+    this._canvas.width = width
+    this._canvas.height = height
+    ctx.clearRect(0, 0, width, height)
+    ctx.globalAlpha = this.opacity
     if (image) {
-      this._canvas.width = width
-      this._canvas.height = height
-      const ctx = this._canvas.getContext('2d')!
-      ctx.globalAlpha = this.opacity
-      ctx.clearRect(0, 0, width, height)
       ctx.drawImage(image.bitmap, 0, 0)
     }
     const ratio = this._ctx.op.currentZoom

@@ -4,7 +4,6 @@ import type { IPhotoFlexOp } from './photo-flex-operation'
 import type { Viewport } from './scale'
 import { type ParameterContext } from './view/param-context'
 import { type PhotoFlexEventMap } from './event/event-bus'
-import { type ImageSource } from './image-source'
 import { type PhotoFlex } from './photo-flex'
 
 export class PhotoFlexContext {
@@ -31,8 +30,8 @@ export class PhotoFlexContext {
   get paramContext(): ParameterContext {
     return this._paramContext
   }
-  setActiveImage(source: ImageSource) {
-    this._flex.setActiveImage(source)
+  setActiveImage(imageUuid: string) {
+    this._flex.setActiveImage(imageUuid)
   }
   resolveDataName(viewType: keyof DataNameParam) {
     const { parameter } = this._paramContext
@@ -45,5 +44,8 @@ export class PhotoFlexContext {
     handler: (payload: PhotoFlexEventMap[K]) => void
   ): Unsubscriber {
     return this.eventBus.subscribe(event, handler)
+  }
+  openImageSourceView() {
+    this._flex.openImageSourceView()
   }
 }

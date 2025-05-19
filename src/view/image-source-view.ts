@@ -14,47 +14,97 @@ export class ImageSourceView implements IView {
   private _container: HTMLDivElement
   private _sources: ImageSource[] = []
   private _activeSource: ImageSource | undefined
+  private _visible: boolean = true
   private templates = {
-    menu: `<menu data-photoflex-image-sources><li>close</li><div class="inner"></div></menu>`,
+    menu: `<menu data-photoflex-image-sources class="visible">
+  <div>
+    <button data-photoflex-action data-cmd="hide" class="white"><span class="material-symbols-outlined">close</span></button>
+  </div><div class="inner"></div></menu>`,
     item: `<li tabindex="0" role="button" data-photoflex-image-item></li>`,
-    close: `<button data-photoflex-action><span class="material-symbols-outlined">close</span></button>`,
+    close: `<button data-photoflex-action data-cmd="delete"><span class="material-symbols-outlined">close</span></button>`,
   }
   constructor(private readonly _ctx: PhotoFlexContext) {
     this._container = dom.createFromHtml<HTMLDivElement>(this.templates.menu)
   }
+  private get bodyEl() {
+    return this._container.querySelector('.inner')!
+  }
 
   /**
    * Attaches this view to a container element.
-   * Subscribes to the 'source' event to update the image list.
    * @param container The HTML element to attach to.
    */
   bindTo(container: HTMLElement): void {
-    container.appendChild(this._container)
-
+    this.hide()
     this._ctx.subscribe('source', (event) => {
-      console.log('ImageSourceView: Received source event', event)
-      this.update(event) // Call update when a new image is added
+      this.update(container, event)
     })
   }
+  // FIXME menu 컴포넌트로 옮겨야 함.
+  private _bindButtonEvent(container: HTMLElement): void {
+    dom.event.click(this._container, 'button[data-cmd="hide"]', (e) => {
+      const btn = (e.target as HTMLButtonElement).closest('button')
+      if (!btn) {
+        return
+      }
+      const { cmd } = btn.dataset
+      if (cmd === 'open') {
+        this.render(container)
+      } else if (cmd === 'hide') {
+        this.hide()
+      }
+    })
+    dom.event.click(this.bodyEl, '[data-cmd="delete"]', (e) => {
+      e.stopPropagation()
+      e.stopImmediatePropagation()
+      const li = dom.closest<HTMLLIElement>(e.target as HTMLLIElement, 'li')
+      if (!li) {
+        return
+      }
+      // this.hide()
+      const { uuid } = li.dataset
+      let idx = this._sources.findIndex((img) => img.uuid === uuid)
+      if (idx + 1 === this._sources.length) {
+        idx--
+      } else {
+        idx++
+      }
+      const activeImage = this._sources[idx]
 
+      if (uuid) {
+        this._ctx.op.removeImage(uuid, activeImage?.uuid)
+      }
+    })
+    dom.event.click(this.bodyEl, 'li', (e) => {
+      e.stopPropagation()
+      const li = dom.closest<HTMLLIElement>(e.target as HTMLLIElement, 'li')
+      if (!li) {
+        return
+      }
+      const { uuid } = li.dataset
+      if (uuid) {
+        this._ctx.setActiveImage(uuid)
+      }
+    })
+  }
   /**
    * Updates the view based on source events (add, remove, clear).
    * @param event The SourceEvent object.
    */
-  private update(event: SourceEvent): void {
+  private update(parentEl: HTMLElement, event: SourceEvent): void {
     //Refactor: use correct type SourceEvent
     switch (event.type) {
       case 'added':
         if (event.sources) {
           this._sources.push(...event.sources)
         }
-        this.render()
+        this.render(parentEl)
         break
       case 'deleted':
         if (event.sources) {
           const uuids = new Set<string>(event.sources.map((e) => e.uuid))
           this._sources = this._sources.filter((s) => !uuids.has(s.uuid))
-          this.render()
+          this.render(parentEl)
         }
         break
       case 'activated':
@@ -65,8 +115,6 @@ export class ImageSourceView implements IView {
         }
         break
       case 'deactivated':
-        // this._activeSource = null;
-        // this.render();
         break
       case 'error': // optional, can display error messages
         console.warn('ImageSourceView: Error loading source', event.error)
@@ -98,17 +146,16 @@ export class ImageSourceView implements IView {
       )
     }
   }
-  /**
-   * Renders the list of ImageSource objects.
-   * Creates a simple list of image names (you can customize this to show thumbnails, etc.).
-   */
-  private render(): void {
-    const body = this._container.querySelector('.inner')!
-
-    dom.emptify(body)
+  private render(parentEl: HTMLElement): void {
+    parentEl.appendChild(this._container)
+    dom.emptify(this.bodyEl)
+    this.bodyEl.classList.remove('empty')
+    this.show()
+    this._bindButtonEvent(parentEl)
 
     if (this._sources.length === 0) {
-      this._container.textContent = 'No images loaded.'
+      this.bodyEl.classList.add('empty')
+      this.bodyEl.textContent = 'Empty'
       return
     }
     const size = 42
@@ -133,14 +180,12 @@ export class ImageSourceView implements IView {
       if (ctx && source.bitmap) {
         image.width = size
         image.height = size
-        // Scale down to fit in the 40px height/width
-        const scale = Math.min(size / source.width, size / source.height) // Ensure scale is positive
+        const scale = Math.min(size / source.width, size / source.height)
         const scaledWidth = source.width * scale
         const scaledHeight = source.height * scale
 
         const offsetX = (size - scaledWidth) / 2
         const offsetY = (size - scaledHeight) / 2
-        //Draw the image
         ctx.drawImage(
           source.bitmap,
           offsetX,
@@ -165,12 +210,36 @@ export class ImageSourceView implements IView {
       dimensionsRow.textContent = `(${source.width}x${source.height})`
 
       dom.appends(itemDiv, image, nameRow, sizeRow, dimensionsRow)
-      itemDiv.addEventListener('click', () => {
-        this._ctx.setActiveImage(source)
+      // itemDiv.addEventListener('click', (e) => {
+      //   console.log(e.target)
+      //   this._ctx.setActiveImage(source.uuid)
+      // })
+      setTimeout(() => {
+        this.bodyEl.appendChild(itemDiv)
       })
-
-      body.appendChild(itemDiv)
+    }) // end forEach
+    setTimeout(() => {
+      this._setActive()
     })
-    this._setActive()
+  }
+  show() {
+    if (!this._visible) {
+      this._container.classList.add('visible')
+      this._visible = true
+    }
+  }
+  hide() {
+    if (this._visible) {
+      this._visible = false
+      const onEnd = () => {
+        dom.emptify(this.bodyEl)
+        this._container.removeEventListener('transitionend', onEnd)
+        this._container.remove()
+      }
+      if (this._container.parentElement) {
+        this._container.addEventListener('transitionend', onEnd)
+      }
+      this._container.classList.remove('visible')
+    }
   }
 }

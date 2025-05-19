@@ -59,12 +59,12 @@ export class ImageSource implements Viewport {
       this._map = undefined
     }
   }
-  static async fromFile(file: File) {
+  static async fromBlob(file: Blob, name: string) {
     if (!file.type.startsWith('image/')) {
       throw new Error('File is not an image')
     }
     const bitmap = await createImageBitmap(file)
-    const { name, size, type } = file
+    const { size, type } = file
     return new ImageSource(bitmap, { name, size, type })
   }
   static fromSource(source: ImageSource) {

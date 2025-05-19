@@ -64,7 +64,7 @@ export type SourceEvent = {
    */
   type: SourceEventType
   /**
-   * An array of ImageSources, used for 'added' if multiple sources are added at once.
+   * An array of ImageSources, used for 'added' and 'deleted' if multiple sources are added(deleted) at once.
    */
   sources?: ImageSource[]
   /**

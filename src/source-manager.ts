@@ -14,6 +14,9 @@ export class SourceManager {
 
   constructor(private readonly _ctx: PhotoFlexContext) {}
 
+  private _clearCache(source: ImageSource) {
+    this._cachedMap.delete(source.uuid)
+  }
   /**
    * Adds image sources to the manager.
    * @param sources image sources to add
@@ -28,29 +31,35 @@ export class SourceManager {
   }
 
   /**
-   * Removes an ImageSource from the manager by its name.
-   * Also destroys the ImageSource to release its resources (e.g., ImageBitmap).
-   * @param uuid The name of the ImageSource to remove.
+   * Removes an ImageSource from the manager by its uuid.
+   * @param uuid The uuid of the ImageSource to remove.
    */
-  public removeSource(uuid: string): void {
+  public removeSource(uuid: string): ImageSource | undefined {
     const index = this.sources.findIndex((s) => s.uuid === uuid)
+    let removedSource: ImageSource | undefined
     if (index !== -1) {
-      const removedSource = this.sources.splice(index, 1)[0]
+      removedSource = this.sources.splice(index, 1)[0]!
       if (this.activeSource === removedSource) {
         this.clearActiveSource()
       }
-      removedSource.destroy()
+      this._clearCache(removedSource)
       this._emitEvent({ type: 'deleted', sources: [removedSource] })
     }
+    return removedSource
   }
 
   /**
    * Gets an ImageSource by its name.
-   * @param name The name of the ImageSource.
+   * @param uuid The uuid of the ImageSource.
    * @returns The ImageSource if found, otherwise undefined.
+   * @throws error if cannot find the image
    */
-  public getSourceByName(name: string): ImageSource | undefined {
-    return this.sources.find((s) => s.uuid === name)
+  public getSourceBy(preciate: (s: ImageSource) => boolean): ImageSource {
+    const found = this.sources.find(preciate)
+    if (!found) {
+      throw new Error('cannot find the image')
+    }
+    return found
   }
 
   /**
@@ -106,9 +115,6 @@ export class SourceManager {
    */
   public clearActiveSource(): void {
     if (this.activeSource) {
-      console.log(
-        `SourceManager: Cleared active source - ${this.activeSource.uuid}`
-      )
       const previouslyActive = this.activeSource
       this.activeSource = null
       this._emitEvent({

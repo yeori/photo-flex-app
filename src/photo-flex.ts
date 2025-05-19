@@ -23,6 +23,7 @@ import { CaptureEvent } from './event'
 import { SourceManager } from './source-manager' // Import SourceManager
 import { ImageSourceView } from './view/image-source-view'
 import { TooltipView } from './view/tooltip/tooltip-view'
+import { OpenImageSourceAction } from './view/action/action-open-image-source'
 
 /**
  * Main class for photo flex.
@@ -171,6 +172,8 @@ export class PhotoFlex implements Viewport {
     const modal = new ModalUI(this._operator)
     modal.bindTo(container)
     this._modalUI = modal
+
+    new OpenImageSourceAction(this._photoFlexContext).bindTo(container)
   }
   /**
    * handles drag event to catch and render dropped image file.
@@ -181,7 +184,6 @@ export class PhotoFlex implements Viewport {
     const handleDragEnter = (event: DragEvent) => {
       event.preventDefault()
       event.stopPropagation()
-      console.log('[DRAG ENTER]', event.target)
       const { target, currentTarget } = event
       if (target !== currentTarget) {
         console.log('skip')
@@ -206,7 +208,6 @@ export class PhotoFlex implements Viewport {
       if (target !== currentTarget) {
         return
       }
-      console.log('[DRAG OVER]')
       if (event.dataTransfer) {
         event.dataTransfer.dropEffect = 'copy'
       }
@@ -234,7 +235,6 @@ export class PhotoFlex implements Viewport {
 
       unsub?.()
       unsub = undefined
-      console.log('[DROP]')
 
       if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
         const files = Array.from(event.dataTransfer.files)
@@ -317,12 +317,20 @@ export class PhotoFlex implements Viewport {
       ? this._paramContext.ratio
       : ratioResolvers[scaleMode](source, this)
   }
-  public setActiveImage(source: ImageSource) {
+  public setActiveImage(imageUuid: string) {
+    const source = this._sourceManager.getSourceBy(
+      (image) => image.uuid === imageUuid
+    )
     const layer = this._canvasView.getFirstLayer()
+    let ratio: number = 1
     if (layer) {
       const center = layer.getCenter()
-      let { image, ratio } = layer
-      this._sourceManager.write({ imageUuid: image.uuid, center, scale: ratio })
+      let { image, ratio: _ratio } = layer
+      this._sourceManager.write({
+        imageUuid: image.uuid,
+        center,
+        scale: _ratio,
+      })
       layer.replaceImageSource(source)
       const param = this._sourceManager.setActiveSource(source)
       if (param) {
@@ -342,23 +350,31 @@ export class PhotoFlex implements Viewport {
           layer: layer.uuid,
         })
       }
-
-      this.repaint()
-      this._eventBus.emit('source', {
-        type: 'activated',
-        sources: [source],
-      })
-      this._eventBus.emit('open', {
-        image: source,
-        ratio,
-      })
+    } else {
+      ratio = this._calculateScale(source)
+      const layer = ImageLayer.create(
+        source,
+        this._canvasView.originReslover,
+        { x: 0, y: 0 },
+        ratio
+      )
+      this._canvasView.addLayer(layer)
     }
+    this.repaint()
+    this._eventBus.emit('source', {
+      type: 'activated',
+      sources: [source],
+    })
+    this._eventBus.emit('open', {
+      image: source,
+      ratio,
+    })
   }
   private async _fileToImage(files: File[]) {
     const sources: ImageSource[] = []
     for (const file of files) {
       try {
-        const source = await ImageSource.fromFile(file)
+        const source = await ImageSource.fromBlob(file, file.name)
         sources.push(source)
       } catch (error) {
         console.error(
@@ -398,16 +414,18 @@ export class PhotoFlex implements Viewport {
     )!
     this._sourceManager.setActiveSource(source)
 
-    const layer = ImageLayer.create(
-      source,
-      this._canvasView.originReslover,
-      origin,
-      ratio
-    )
     if (clear) {
       this._canvasView.removeLayers()
     }
-    this._canvasView.addLayer(layer)
+    if (this._canvasView.isEmpty()) {
+      const layer = ImageLayer.create(
+        source,
+        this._canvasView.originReslover,
+        origin,
+        ratio
+      )
+      this._canvasView.addLayer(layer)
+    }
     this.repaint()
     this._eventBus.emit('source', {
       type: 'activated',
@@ -417,6 +435,22 @@ export class PhotoFlex implements Viewport {
       image: source,
       ratio,
     })
+  }
+  async removeImageByUuid(
+    uuid: string,
+    activeImageUuid?: string
+  ): Promise<boolean> {
+    const imageToDel = this._sourceManager.getSourceBy(
+      (image) => image.uuid === uuid
+    )
+    this._sourceManager.removeSource(imageToDel.uuid)
+    if (activeImageUuid) {
+      this.setActiveImage(activeImageUuid)
+    } else {
+      this._canvasView.removeLayerBy((_layer) => _layer.image.uuid === uuid)
+    }
+    this.repaint()
+    return Promise.resolve(true)
   }
   getZoomLevel(): number {
     const firstLayer = this._canvasView.getFirstLayer()
@@ -521,6 +555,11 @@ export class PhotoFlex implements Viewport {
       return await this._capture(type)
     } else {
       throw new Error('check capture type: ' + type)
+    }
+  }
+  openImageSourceView() {
+    if (this._imageSourceView) {
+      this._eventBus.emit('source', { type: 'added', sources: [] })
     }
   }
   static init(el: HTMLElement, param?: PhotoFlexInitParam): IPhotoFlexOp {

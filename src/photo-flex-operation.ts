@@ -50,6 +50,12 @@ export interface IPhotoFlexOp {
   fitToRealSize(): void
   openImage(files: File[]): Promise<void>
   /**
+   * Removes an image from the editor.
+   * @param imageUuid The UUID of the image to remove.
+   * @param activeImageUuid (optinonal) The UUID of the image to be activated.
+   */
+  removeImage(imageUuid: string, activeImageUuid?: string): Promise<boolean>
+  /**
    * text form for current zoom level
    * @param metric
    */
@@ -121,6 +127,9 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   }
   openImage(files: File[]): Promise<void> {
     return this.target.setImage(files)
+  }
+  removeImage(imageUuid: string, activeImageUuid?: string): Promise<boolean> {
+    return this.target.removeImageByUuid(imageUuid, activeImageUuid)
   }
   getZoomText<K extends keyof ZoomValueMap>(metric: K): ZoomValueMap[K] {
     const zoomLevle = this.target.getZoomLevel()

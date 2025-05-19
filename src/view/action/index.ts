@@ -5,7 +5,10 @@ export abstract class AbstractAction implements IAction {
   protected _el: HTMLElement | undefined
   // private _ctx: PhotoFlexContext | undefined
 
-  constructor(protected param: ActionParam, private _ctx?: PhotoFlexContext) {}
+  constructor(
+    protected param: ActionParam,
+    protected _ctx?: PhotoFlexContext
+  ) {}
   protected createElement?<K extends HTMLElement = HTMLElement>(): K {
     return dom.create<K>('button')
   }

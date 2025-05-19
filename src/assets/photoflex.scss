@@ -167,10 +167,22 @@
   z-index: 50;
   background: white;
   padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s linear;
+  box-shadow: 0 0 8px #0000004d, 0 0 4px #0000008d;
+  min-width: 200px;
   & > .inner {
     overflow-y: auto;
     flex: 1 1 auto;
     height: 100%;
+    &.empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  &.visible {
+    opacity: 1;
   }
 }
 [data-photoflex-image-item] {
@@ -238,7 +250,18 @@
   font-size: 0.8rem;
   pointer-events: none;
   z-index: 9999;
-  opacity: 1;
+  opacity: 0;
   transition: opacity 0.2s ease-in-out;
   white-space: nowrap;
+}
+
+[data-photoflex-imagesource] {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border-radius: 2rem;
+  z-index: 50;
+  &.shadow {
+    box-shadow: 2px 2px 6px #0000008d, 2px 2px 2px #0000002d;
+  }
 }
