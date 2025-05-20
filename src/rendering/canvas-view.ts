@@ -4,6 +4,7 @@ import { Viewport, type Point } from '../scale'
 import { PhotoFlexInitParam } from '../'
 import { dom } from '../util'
 import { PhotoFlexContext } from '../photo-flex-context'
+import { locateOnCenter } from '../locator/locate-on-center'
 /**
  * translates the given point relative to origin of canvas.
  */
@@ -172,14 +173,33 @@ export class CanvasRenderer implements IRenderer {
    */
   async capture(): Promise<{ imageURL: string; name: string }> {
     const buffer = document.createElement('canvas')
-    const { width, height } = this
-    buffer.width = width
-    buffer.height = height
-    buffer.style.width = `${width}px`
-    buffer.style.height = `${height}px`
+    const [intrinsicW] = this._context.paramContext.getWidth()
+    const [intrinsicH] = this._context.paramContext.getHeight()
+    buffer.width = intrinsicW
+    buffer.height = intrinsicH
+    buffer.style.width = `${intrinsicW}px`
+    buffer.style.height = `${intrinsicH}px`
     const ctx = buffer.getContext('2d')!
     const layer = this.getFirstLayer()!
-    layer.draw(ctx)
+    const c = layer.getCenter()
+    const { ratio } = layer
+    const { width, height } = this
+    const area = locateOnCenter({ width, height }, c, 1)
+
+    const sx = (layer.image.width - area.width / ratio) / 2
+    const sy = (layer.image.height - area.height / ratio) / 2
+    const { x, y } = this._resolveOrigin(area)
+    ctx.drawImage(
+      layer.image.bitmap,
+      sx - x / ratio,
+      sy - y / ratio,
+      width / ratio,
+      height / ratio,
+      0,
+      0,
+      intrinsicW,
+      intrinsicH
+    )
     const { mimeType, uuid: name } = layer.image
     const imageURL = buffer.toDataURL(mimeType)
     return { imageURL, name }

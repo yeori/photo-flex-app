@@ -1,18 +1,26 @@
 import { PhotoflexSizeParam } from './types'
+import { dom } from './util'
 
 export const bindDimension = (
   el: HTMLElement,
   target: 'width' | 'height',
-  value: 'fluid' | string | PhotoflexSizeParam
+  value: 'fluid' | string | PhotoflexSizeParam,
+  scale: number = 1
 ): void => {
-  let val = ''
+  let val: [number, string]
   if (value === 'fluid') {
-    val = '100%'
+    val = [100, '%']
   } else if (typeof value === 'string') {
-    val = value
+    val = dom.parseUnit(value)
   } else {
-    val = value.value
+    val = dom.parseUnit(value.value)
   }
 
-  el.style[target] = val
+  if (target === 'width') {
+    el.style.maxWidth = `${val[0] * scale}${val[1]}`
+  } else if (target === 'height') {
+    el.style.maxHeight = `${val[0] * scale}${val[1]}`
+  }
+
+  el.style[target] = '100%'
 }

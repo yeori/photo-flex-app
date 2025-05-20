@@ -45,6 +45,7 @@ export class PhotoFlex implements Viewport {
   private _tooltipView: TooltipView
   private _modalUI?: ModalUI
   private _sourceManager: SourceManager // Add SourceManager
+  private _scaleForExport: number = 1
 
   /**
    * Constructor for PhotoFlex.
@@ -69,22 +70,7 @@ export class PhotoFlex implements Viewport {
     )
     this._assignDimension(this._boardEl)
     dom.event.bindResizeObserver(this._boardEl, () => {
-      setTimeout(() => {
-        const rect = this._boardEl.getBoundingClientRect()
-        let width = 0
-        let height = 0
-        if (this._paramContext.isResizable('width')) {
-          width = rect.width
-        }
-        if (this._paramContext.isResizable('height')) {
-          height = rect.height
-        }
-        // this._canvasView.resize()
-        if (width > 0 || height > 0) {
-          this._canvasView.setSize(width, height)
-          this.repaint()
-        }
-      }, 0)
+      setTimeout(this._handleResize.bind(this), 0)
     })
 
     this._pixelRatio = self.devicePixelRatio || 1
@@ -148,23 +134,61 @@ export class PhotoFlex implements Viewport {
     }
     return this._modalUI
   }
-  private _assignDimension(el: HTMLElement) {
-    const { width, height } = this._paramContext.size
-    const widthValue = this._paramContext.getWidth()
-    bindDimension(el, 'width', width)
-    if (this._paramContext.isResizable('width')) {
-      el.style.flex = `0 1 ${widthValue}`
-    } else {
-      el.style.flex = `0 0 ${widthValue}`
+  private _resolveScaleForExport(width: number, height: number) {
+    // const outer = el.parentElement!.getBoundingClientRect()
+    return Math.min(1, height / width)
+  }
+  private _handleResize() {
+    const rect = this._boardEl.getBoundingClientRect()
+    let width = rect.width
+    let height = rect.height
+    if (width > 0 || height > 0) {
+      this._canvasView.setSize(width, height)
+      this.repaint()
     }
-    const heightValue = this._paramContext.getHeight()
-    if (this._paramContext.isResizable('height')) {
+  }
+  private _assignDimension(el: HTMLElement) {
+    const { width } = this._paramContext.size
+    const [pixelWidth] = this._paramContext.getWidth()
+    const [pixelHeight, hUnit] = this._paramContext.getHeight()
+    this._scaleForExport = this._resolveScaleForExport(pixelWidth, pixelHeight)
+    console.log(this._scaleForExport)
+    const widthResizable = this._paramContext.isResizable('width')
+    const heightResizable = this._paramContext.isResizable('height')
+    if (this._canvasView) {
+      this._canvasView.canvas.style.display = 'none'
+    }
+    if (!widthResizable && !heightResizable) {
       dom.style(el, {
-        height: '100%',
-        maxHeight: heightValue,
+        aspectRatio: `${pixelWidth} / ${pixelHeight}`,
       })
     } else {
-      bindDimension(el, 'height', height)
+      dom.style(el, {
+        aspectRatio: 'auto',
+      })
+    }
+    bindDimension(el, 'width', width)
+    if (widthResizable) {
+      el.style.flex = `0 1 auto`
+    } else {
+      el.style.flex = `0 0 auto`
+    }
+
+    if (heightResizable) {
+      dom.style(el, {
+        height: '100%',
+        maxHeight: `${pixelHeight}${hUnit}`,
+      })
+    } else {
+      dom.style(el, {
+        height: `${pixelHeight}px`,
+      })
+      setTimeout(() => {
+        el.style.height = ''
+      }, 10)
+    }
+    if (this._canvasView) {
+      this._canvasView.canvas.style.display = ''
     }
   }
   private installUI(container: HTMLElement) {
@@ -296,8 +320,8 @@ export class PhotoFlex implements Viewport {
       image = this._canvasView.getFirstLayer()!.image
     }
     this._eventBus.emit('viewport:resize', {
-      width: width,
-      height: height,
+      width,
+      height,
       image,
     })
   }

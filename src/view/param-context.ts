@@ -7,6 +7,7 @@ import {
   ActionZoomParam,
   PhotoFlexInitParam,
 } from '../types'
+import { dom } from '../util'
 
 const DefaultActionParams: Record<string, ActionParam> = {
   file: { id: 'file', label: 'Image', tooltip: 'Open image file(s)' },
@@ -122,7 +123,9 @@ export class ParameterContext {
   }
   private _setSizeAt(target: 'width' | 'height', value: number) {
     const elem = this._param[target]!
-    if (typeof elem === 'string') {
+    if (elem === 'fluid') {
+      this._param[target] = elem
+    } else if (typeof elem === 'string') {
       this._param[target] = `${value}px`
     } else {
       elem.value = `${value}px`
@@ -132,21 +135,26 @@ export class ParameterContext {
     this._setSizeAt('width', width)
     this._setSizeAt('height', height)
   }
-  private _sizeOf(target: 'width' | 'height') {
+  private _sizeOf(target: 'width' | 'height'): [number, string] {
     const elem = this._param[target]!
-    if (typeof elem === 'string') {
-      return elem
+    let expression: string = ''
+    if (elem === 'fluid') {
+      expression = '100%'
+    } else if (typeof elem === 'string') {
+      expression = elem
+    } else {
+      expression = elem.value
     }
-    return elem.value
+    return dom.parseUnit(expression)
   }
   /**
    * width value including metric like "100%", "430px" etc
    * @returns
    */
-  getWidth() {
+  getWidth(): [number, string] {
     return this._sizeOf('width')
   }
-  getHeight() {
+  getHeight(): [number, string] {
     return this._sizeOf('height')
   }
   isResizable(target: 'width' | 'height') {

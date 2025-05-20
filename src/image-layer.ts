@@ -77,10 +77,10 @@ export class ImageLayer {
 
     ctx.restore()
   }
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, area?: Area) {
     const { bitmap, x, y, width, height } = this._image
-    const { _area: a } = this
-    const { x: sx, y: sy } = this._translateToSceen(this._area)
+    const a = area || this._area
+    const { x: sx, y: sy } = this._translateToSceen(a)
     ctx.drawImage(bitmap, x, y, width, height, sx, sy, a.width, a.height)
     this._drawCenter(ctx)
   }
