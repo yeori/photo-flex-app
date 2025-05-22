@@ -7,7 +7,6 @@ import { ResizeAction } from './action-resize'
 import { ZoomAction } from './action-zoom'
 import { OpenAction } from './action-open'
 import { CaptureAction } from './action-capture'
-import { AbstractAction } from '.'
 
 export class ActionFactory {
   private _el: HTMLElement
@@ -63,14 +62,26 @@ export class ActionFactory {
             `[PHOTOFLEX-APP] ACTION_ID_NOT_FOUND: no such action(${id})`
           )
         }
-      } else if (param.id === 'resize') {
-        const action = new ResizeAction(this._ctx, param as ActionResizeParam)
-        this.installAction(action)
-      } else if (param.id === 'zoom') {
-        this.installAction(new ZoomAction(this._ctx, param as ActionZoomParam))
-      } else if (param instanceof AbstractAction) {
-        param.setContext(this._ctx)
-        this.installAction(param)
+      } else if (typeof param === 'function') {
+        if ('prototype' in param && typeof param.prototype === 'object') {
+          this.installAction(new param(this._ctx))
+        }
+      } else if ('id' in param) {
+        switch (param.id) {
+          case 'resize':
+            this.installAction(
+              new ResizeAction(this._ctx, param as ActionResizeParam)
+            )
+            break
+          case 'zoom':
+            this.installAction(
+              new ZoomAction(this._ctx, param as ActionZoomParam)
+            )
+            break
+          default:
+            console.warn(`action id "${param.id}" is not supported.`)
+            break
+        }
       }
     })
   }

@@ -33,6 +33,24 @@ export class PhotoFlexContext {
   setActiveImage(imageUuid: string) {
     this._flex.setActiveImage(imageUuid)
   }
+  private _viewportSizeOf(
+    value: string,
+    target: 'width' | 'height'
+  ): [number, string] {
+    if (value === 'fluid') {
+      return [this._flex[target], 'px']
+    } else {
+      return this._paramContext.getMeasuredSizeAt(target)
+    }
+  }
+  getViewportSize() {
+    const { width: paramW, height: paramH } = this._paramContext.size
+
+    const width = this._viewportSizeOf(paramW, 'width')
+    const height = this._viewportSizeOf(paramH, 'height')
+
+    return { width, height }
+  }
   resolveDataName(viewType: keyof DataNameParam) {
     const { parameter } = this._paramContext
     const { prefix } = parameter.classnames!

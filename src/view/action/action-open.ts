@@ -11,16 +11,13 @@ export class OpenAction extends AbstractAction {
   private fileInput: HTMLInputElement | null = null
 
   constructor(_ctx: PhotoFlexContext, param: ActionParam) {
-    super(param, _ctx)
+    super(_ctx, param)
   }
   get type() {
     return this.param.id
   }
-  /**
-   * Creates the button element for the action.
-   */
   protected createElement<K extends HTMLElement>(): K {
-    const label = this.param.label // this.type === 'file' ? 'Open Image' : 'Take Photo'
+    const label = this.param.label
     const id = `photoflex-f-input-${this.type}`
     const icon = this.type === 'file' ? 'folder_open' : 'photo_camera'
     const capture = this.type === 'file' ? '' : 'environment'
@@ -33,7 +30,6 @@ export class OpenAction extends AbstractAction {
 </label>
     `)
     labelEl.role = 'button'
-    labelEl.ariaPressed = 'false'
     const fileInput = dom.findOne<HTMLInputElement>(labelEl, 'input')
     fileInput.accept = 'image/*'
     fileInput.hidden = true
@@ -44,12 +40,8 @@ export class OpenAction extends AbstractAction {
     })
     labelEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        labelEl.ariaPressed = 'true'
         fileInput.click()
       }
-    })
-    labelEl.addEventListener('blur', () => {
-      labelEl.ariaPressed = 'false'
     })
     this.fileInput = fileInput
 
@@ -68,16 +60,13 @@ export class OpenAction extends AbstractAction {
     event.stopPropagation()
     event.stopImmediatePropagation()
     const input = event.target as HTMLInputElement
-    // Check if files were selected
     if (input.files && input.files.length > 0) {
       const files = Array.from(input.files)
       console.log(`Files selected: ${files.length} files selected`)
 
-      // Ensure the selected file is an image based on MIME type
       const imageFiles = files.filter((file) => file.type.startsWith('image/'))
 
       if (imageFiles.length > 0) {
-        // Use the context's operator to open the image
         this.context.op
           .openImage(imageFiles)
           .then(() => {
@@ -85,11 +74,9 @@ export class OpenAction extends AbstractAction {
           })
           .catch((error) => {
             console.error('Error opening image(s):', error)
-            // TODO: Provide user feedback about the error (e.g., via modal or notification)
           })
       } else {
         console.warn('No image files were selected.')
-        // TODO: Provide user feedback about the invalid file type
       }
     }
   }

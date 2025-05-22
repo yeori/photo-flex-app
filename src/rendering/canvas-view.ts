@@ -1,10 +1,11 @@
-import { IRenderer } from '.'
-import { ImageLayer } from '../image-layer'
-import { Viewport, type Point } from '../scale'
-import { PhotoFlexInitParam } from '../'
+import { type IRenderer } from '.'
+import { type ImageLayer } from '../image-layer'
+import { type Viewport, type Point } from '../scale'
+import { type PhotoFlexInitParam } from '../'
 import { dom } from '../util'
-import { PhotoFlexContext } from '../photo-flex-context'
+import { type PhotoFlexContext } from '../photo-flex-context'
 import { locateOnCenter } from '../locator/locate-on-center'
+import { type RendererParam } from './renderer-param'
 /**
  * translates the given point relative to origin of canvas.
  */
@@ -28,7 +29,8 @@ export class CanvasRenderer implements IRenderer {
   constructor(
     private boardEl: HTMLDivElement,
     private _pixelRatio: number,
-    private readonly _context: PhotoFlexContext
+    private readonly _context: PhotoFlexContext,
+    readonly param: RendererParam
   ) {
     const { prefix, canvas } = this._context.param.classnames!
     this._canvas = dom.create<HTMLCanvasElement>(
@@ -45,6 +47,12 @@ export class CanvasRenderer implements IRenderer {
       return { x: point.x + x, y: point.y + y }
     }
   }
+  get name() {
+    return 'canvas'
+  }
+  get order() {
+    return this.param.order
+  }
   get originReslover() {
     return this._resolveOrigin
   }
@@ -60,11 +68,6 @@ export class CanvasRenderer implements IRenderer {
     const { width, height } = this
     return { width, height }
   }
-
-  get ctxContext() {
-    return this._ctx
-  }
-
   get canvas() {
     return this._canvas
   }
@@ -158,6 +161,7 @@ export class CanvasRenderer implements IRenderer {
   setSize(width: number, height: number) {
     width = width || this.width
     height = height || this.height
+    this._canvas.style.aspectRatio = `${width / height}`
     this._ctx = this._resize(this._canvas, this._context.param, {
       width,
       height,
@@ -173,8 +177,9 @@ export class CanvasRenderer implements IRenderer {
    */
   async capture(): Promise<{ imageURL: string; name: string }> {
     const buffer = document.createElement('canvas')
-    const [intrinsicW] = this._context.paramContext.getWidth()
-    const [intrinsicH] = this._context.paramContext.getHeight()
+    const { width: W, height: H } = this._context.getViewportSize()
+    const intrinsicW = W[0]
+    const intrinsicH = H[0]
     buffer.width = intrinsicW
     buffer.height = intrinsicH
     buffer.style.width = `${intrinsicW}px`

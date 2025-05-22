@@ -1,16 +1,13 @@
 import { PhotoFlexContext } from '../../photo-flex-context'
 import { ActionParam, IAction } from '../../types'
 import { dom } from '../../util'
+
 export abstract class AbstractAction implements IAction {
   protected _el: HTMLElement | undefined
-  // private _ctx: PhotoFlexContext | undefined
 
-  constructor(
-    protected param: ActionParam,
-    protected _ctx?: PhotoFlexContext
-  ) {}
-  protected createElement?<K extends HTMLElement = HTMLElement>(): K {
-    return dom.create<K>('button')
+  constructor(protected _ctx: PhotoFlexContext, protected param: ActionParam) {}
+  protected createElement?(): HTMLButtonElement {
+    return dom.create<HTMLButtonElement>('button')
   }
   get id(): string {
     return this.param.id
@@ -23,7 +20,7 @@ export abstract class AbstractAction implements IAction {
   }
   bindTo(parent: HTMLElement): void {
     const el = this.createElement
-      ? this.createElement<HTMLButtonElement>()
+      ? this.createElement()
       : dom.create<HTMLButtonElement>('button')
     el.dataset.action = this.id
     if (!el.ariaLabel) {
@@ -38,9 +35,6 @@ export abstract class AbstractAction implements IAction {
       el.disabled = false
     })
     parent.appendChild(this._el)
-  }
-  setContext(ctx: PhotoFlexContext) {
-    this._ctx = ctx
   }
   abstract run(): void
   get element(): HTMLElement {

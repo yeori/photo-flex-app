@@ -63,6 +63,7 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
     DefaultActionParams.zoom,
     DefaultActionParams.capture,
   ],
+  renderers: [],
   classnames: {
     prefix: 'photoflex',
     board: 'board',
@@ -104,6 +105,9 @@ export class ParameterContext {
     const { width, height } = this._param
     return { width: width!, height: height! }
   }
+  get renderers() {
+    return this._param.renderers || DefaultInit.renderers
+  }
   get ratio(): number {
     const scale = this._param.scale!
     if (scale === 'cover' || scale === 'contain') {
@@ -114,7 +118,8 @@ export class ParameterContext {
   }
   get defaultResizeParam(): ActionResizeParam {
     const action = DefaultInit.actions.find(
-      (action) => typeof action !== 'string' && action.id === 'resize'
+      (action) =>
+        typeof action !== 'string' && 'id' in action && action.id === 'resize'
     )
     if (!action) {
       throw new Error('no DefaultResizeParam found')
@@ -128,14 +133,14 @@ export class ParameterContext {
     } else if (typeof elem === 'string') {
       this._param[target] = `${value}px`
     } else {
-      elem.value = `${value}px`
+      throw new Error(`invalid size. ${target}: ${elem}`)
     }
   }
   setSize(width: number, height: number) {
     this._setSizeAt('width', width)
     this._setSizeAt('height', height)
   }
-  private _sizeOf(target: 'width' | 'height'): [number, string] {
+  getMeasuredSizeAt(target: 'width' | 'height'): [number, string] {
     const elem = this._param[target]!
     let expression: string = ''
     if (elem === 'fluid') {
@@ -143,7 +148,7 @@ export class ParameterContext {
     } else if (typeof elem === 'string') {
       expression = elem
     } else {
-      expression = elem.value
+      throw new Error(`invalid size. ${target}: ${elem}`)
     }
     return dom.parseUnit(expression)
   }
@@ -152,19 +157,14 @@ export class ParameterContext {
    * @returns
    */
   getWidth(): [number, string] {
-    return this._sizeOf('width')
+    return this.getMeasuredSizeAt('width')
   }
   getHeight(): [number, string] {
-    return this._sizeOf('height')
+    return this.getMeasuredSizeAt('height')
   }
   isResizable(target: 'width' | 'height') {
     const elem = this._param[target]!
-    if (elem === 'fluid') {
-      return true
-    } else if (typeof elem === 'string') {
-      return false
-    }
-    return !!elem.resizable
+    return elem === 'fluid'
   }
   getOptionForZoomAction(): {
     min: number
@@ -176,6 +176,8 @@ export class ParameterContext {
     const zoom = actions!.find((action) => {
       if (typeof action === 'string') {
         return action === 'zoom'
+      } else if (typeof action === 'function') {
+        return false
       } else return action.id === 'zoom'
     })
     if (!zoom || typeof zoom === 'string') {

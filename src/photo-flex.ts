@@ -4,7 +4,6 @@ import { ImageSource } from './image-source'
 import { type ScaleMode, type Viewport, type Point } from './scale'
 import { dom } from './util'
 import { raitioResolvers as ratioResolvers } from './scale'
-import { GridRenderer } from './rendering/grid-renderer'
 import { ImageDragger } from './dnd/image-drag-dnd'
 import { ImageLayer } from './image-layer'
 import { ActionFactory } from './view/action/action-factory'
@@ -15,15 +14,16 @@ import { PhotoFlexContext } from './photo-flex-context'
 import { CanvasRenderer } from './rendering/canvas-view'
 import { ModalUI } from './component/modal-ui'
 import { ZoomByPinch } from './dnd/zoom-by-pinch'
-import { IRenderer } from './rendering'
+import { GridRenderer, GridRenderParam, IRenderer } from './rendering'
 import { AfterImageView } from './view/after-image-view'
 import { bindDimension } from './bind-dimension'
 import { ParameterContext } from './view/param-context'
 import { CaptureEvent } from './event'
-import { SourceManager } from './source-manager' // Import SourceManager
+import { SourceManager } from './source-manager'
 import { ImageSourceView } from './view/image-source-view'
 import { TooltipView } from './view/tooltip/tooltip-view'
 import { OpenImageSourceAction } from './view/action/action-open-image-source'
+import { TooltipData } from './view/tooltip/tooltip-data'
 
 /**
  * Main class for photo flex.
@@ -47,6 +47,8 @@ export class PhotoFlex implements Viewport {
   private _sourceManager: SourceManager // Add SourceManager
   private _scaleForExport: number = 1
 
+  private _tooltip: TooltipData
+
   /**
    * Constructor for PhotoFlex.
    * @param el
@@ -69,16 +71,17 @@ export class PhotoFlex implements Viewport {
       el
     )
     this._assignDimension(this._boardEl)
-    dom.event.bindResizeObserver(this._boardEl, () => {
-      setTimeout(this._handleResize.bind(this), 0)
-    })
 
     this._pixelRatio = self.devicePixelRatio || 1
 
     this._canvasView = new CanvasRenderer(
       this._boardEl,
       this._pixelRatio,
-      this._photoFlexContext
+      this._photoFlexContext,
+      Object.freeze({
+        name: 'canvas',
+        order: 1024,
+      })
     )
     this._afterImageView = new AfterImageView(this._photoFlexContext)
     this._afterImageView.bindTo(this._boardEl)
@@ -94,8 +97,7 @@ export class PhotoFlex implements Viewport {
       }),
     })
 
-    this._renderers.push(this._canvasView)
-    this._renderers.push(new GridRenderer(this._photoFlexContext))
+    this.installRenderers()
     this._actionFactory = new ActionFactory(el, this._photoFlexContext)
     this._actionFactory.installActions(this._paramContext.actions)
     this._wheelControl = new WheelController(this._photoFlexContext)
@@ -104,6 +106,21 @@ export class PhotoFlex implements Viewport {
     this._dnd.addDragListener(new ImageDragger(this))
     this._dnd.addPinchListener(new ZoomByPinch(this))
 
+    this._tooltip = this._tooltipView.createTooltip(
+      this._canvasView.canvas,
+      'ready',
+      'center',
+      0,
+      400
+    )
+    dom.event.bindResizeObserver(this._boardEl, () => {
+      this._tooltip.show()
+      setTimeout(() => {
+        this._handleResize()
+        this._tooltip.setText(`${this.width}x${this.height}`)
+        this._tooltip.hide()
+      }, 10)
+    })
     this.installUI(el)
     this.bindDropdownListener(el)
   }
@@ -140,8 +157,18 @@ export class PhotoFlex implements Viewport {
   }
   private _handleResize() {
     const rect = this._boardEl.getBoundingClientRect()
-    let width = rect.width
-    let height = rect.height
+    let width = 0
+    let height = 0
+    if (this._paramContext.isResizable('width')) {
+      width = rect.width
+    } else {
+      width = this._paramContext.getWidth()[0]
+    }
+    if (this._paramContext.isResizable('height')) {
+      height = rect.height
+    } else {
+      height = this._paramContext.getHeight()[0]
+    }
     if (width > 0 || height > 0) {
       this._canvasView.setSize(width, height)
       this.repaint()
@@ -190,6 +217,19 @@ export class PhotoFlex implements Viewport {
     if (this._canvasView) {
       this._canvasView.canvas.style.display = ''
     }
+  }
+  private installRenderers() {
+    this._renderers.push(this._canvasView)
+    const { renderers } = this._paramContext
+    renderers.forEach((param) => {
+      if (param.name === 'grid') {
+        this._renderers.push(
+          new GridRenderer(this._photoFlexContext, param as GridRenderParam)
+        )
+      } else {
+        throw new Error(`invalid renderer. name: ${param.name}`)
+      }
+    })
   }
   private installUI(container: HTMLElement) {
     customElements.define('modal-ui', ModalUI)
@@ -495,6 +535,8 @@ export class PhotoFlex implements Viewport {
       }
       layer.setScale(newRatio)
       layer.setCenter(origin.x, origin.y)
+      this._tooltip.setText((100 * newRatio).toFixed(1) + '%')
+      this._tooltip.show(500)
       this._eventBus.emit('zoom', {
         ratio,
         layer: uuid,
@@ -564,6 +606,8 @@ export class PhotoFlex implements Viewport {
       this._canvasView.viewportSize
     )
     const dimension = this._canvasView.viewportSize
+    this._tooltip.setText(`Captured. ${fileName}`)
+    this._tooltip.show(2000)
     return { image: imageURL, type, name: fileName, length, dimension }
   }
 
@@ -593,6 +637,14 @@ export class PhotoFlex implements Viewport {
 }
 export * from './types'
 export * from './rendering'
-export { ImageLayer, ImageSource, IPhotoFlexOp, ScaleMode, Viewport, Point }
+export {
+  ImageLayer,
+  ImageSource,
+  IPhotoFlexOp,
+  ScaleMode,
+  Viewport,
+  Point,
+  type PhotoFlexContext,
+}
 export * from './event'
 export * from './view'

@@ -1,10 +1,9 @@
-import { PhotoflexSizeParam } from './types'
 import { dom } from './util'
 
 export const bindDimension = (
   el: HTMLElement,
   target: 'width' | 'height',
-  value: 'fluid' | string | PhotoflexSizeParam,
+  value: 'fluid' | string,
   scale: number = 1
 ): void => {
   let val: [number, string]
@@ -13,7 +12,7 @@ export const bindDimension = (
   } else if (typeof value === 'string') {
     val = dom.parseUnit(value)
   } else {
-    val = dom.parseUnit(value.value)
+    throw new Error('check the value: ' + value)
   }
 
   if (target === 'width') {

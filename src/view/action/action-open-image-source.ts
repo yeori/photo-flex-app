@@ -5,11 +5,10 @@ import { dom } from '../../util'
 export class OpenImageSourceAction extends AbstractAction {
   private _template = `<button data-photoflex-action data-photoflex-imagesource class="white shadow"><span class="material-symbols-outlined">more_horiz</span></button>`
   constructor(_ctx: PhotoFlexContext) {
-    super({ id: 'open-image-source', label: 'Open Image Source' }, _ctx)
+    super(_ctx, { id: 'open-image-source', label: 'Open Image Source' })
   }
-  protected createElement<K extends HTMLElement = HTMLButtonElement>(): K {
-    const el = dom.createFromHtml(this._template)
-    return el as unknown as K
+  protected createElement(): HTMLButtonElement {
+    return dom.createFromHtml<HTMLButtonElement>(this._template)
   }
   run(): void {
     this._ctx!.openImageSourceView()

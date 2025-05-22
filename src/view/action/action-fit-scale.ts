@@ -15,9 +15,9 @@ export class ActionFitCover extends AbstractAction {
     private readonly scale: 'cover' | 'contain' | 'real',
     param: ActionParam
   ) {
-    super(param, _ctx)
+    super(_ctx, param)
   }
-  protected createElement<K extends HTMLElement>(): K {
+  protected createElement(): HTMLButtonElement {
     const btn =
       dom.createFromHtml<HTMLButtonElement>(`<button class="blue" data-photoflex-action aria-label="${
         this.label
@@ -25,7 +25,7 @@ export class ActionFitCover extends AbstractAction {
       <span class="material-symbols-outlined">${this.icons[this.scale]}</span>
     </button>`)
     btn.disabled = true
-    return btn as unknown as K
+    return btn
   }
   run(): void {
     if (this.scale === 'contain') {

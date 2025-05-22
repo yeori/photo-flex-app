@@ -1,4 +1,4 @@
-import { ImageLocator } from '.'
+import { type ImageLocator } from '.'
 
 /**
  * locates subject on center of viewport

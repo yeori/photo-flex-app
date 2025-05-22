@@ -8,11 +8,11 @@ import { dom } from '../../util'
  */
 export class CaptureAction extends AbstractAction {
   constructor(_ctx: PhotoFlexContext, param: ActionParam) {
-    super(param, _ctx)
+    super(_ctx, param)
   }
 
-  protected createElement<K extends HTMLElement>(): K {
-    const btn = dom.createFromHtml<HTMLButtonElement>(`
+  protected createElement<K extends HTMLButtonElement>(): K {
+    const btn = dom.createFromHtml<K>(`
       <button class="blue" data-photoflex-action aria-label="Capture viewport image">
         <span class="material-symbols-outlined">capture</span>
       </button>
@@ -21,7 +21,7 @@ export class CaptureAction extends AbstractAction {
     this.context.subscribe('open', () => {
       btn.disabled = false
     })
-    return btn as unknown as K
+    return btn
   }
 
   async run(): Promise<void> {

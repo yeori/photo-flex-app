@@ -45,20 +45,7 @@ export class TooltipView implements IView {
     const { photoflexTooltip: tooltipText } = elem?.dataset
 
     if (tooltipText && this._activeTooltip?.actionElement !== elem) {
-      if (this._activeTooltip) {
-        this._activeTooltip.dispose()
-        this._activeTooltip = null
-      }
-
-      const newTooltipData = new TooltipData(
-        elem,
-        tooltipText,
-        this.SHOW_DELAY,
-        this.HIDE_DELAY
-      )
-
-      this._activeTooltip = newTooltipData
-      this._activeTooltip.startShowTimer(this._tooltipBoxEl)
+      this.showTooltip(elem, tooltipText, this.SHOW_DELAY, this.HIDE_DELAY)
     } else if (!elem && this._activeTooltip) {
       this._activeTooltip.hide()
     }
@@ -105,13 +92,62 @@ export class TooltipView implements IView {
    */
   private hideAndDisposeActiveTooltip(): void {
     if (this._activeTooltip) {
-      this._activeTooltip.dispose()
+      this._activeTooltip.hide()
       this._activeTooltip = null
     }
   }
 
+  createTooltip(
+    elem: HTMLElement,
+    text: string,
+    dir: 'top' | 'center' | 'bottom',
+    showDelay?: number,
+    hideDelay?: number
+  ): TooltipData {
+    return new TooltipData(
+      this._tooltipBoxEl,
+      elem,
+      text,
+      dir,
+      showDelay !== undefined ? showDelay : this.SHOW_DELAY,
+      hideDelay !== undefined ? hideDelay : this.HIDE_DELAY
+    )
+  }
+
   /**
-   * Disposes the tooltip view, removing listeners and elements.
+   * Shows a tooltip for a given element
+   * @param elem The HTML element to attach the tooltip to.
+   * @param text The tooltip text.
+   * @param showDelay The delay before showing the tooltip.
+   * @param hideDelay The delay before hiding the tooltip.
+   */
+  showTooltip(
+    elem: HTMLElement,
+    text: string,
+    showDelay?: number,
+    hideDelay?: number
+  ): TooltipData {
+    if (this._activeTooltip) {
+      this._activeTooltip.dispose()
+      this._activeTooltip = null
+    }
+
+    const tooltip = this.createTooltip(
+      elem,
+      text,
+      'bottom',
+      showDelay,
+      hideDelay
+    )
+
+    this._activeTooltip = tooltip
+
+    tooltip.show()
+    return tooltip
+  }
+
+  /**
+   * Disposes the tooltip view.
    */
   dispose(): void {
     this.hideAndDisposeActiveTooltip()

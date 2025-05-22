@@ -1,3 +1,6 @@
+import { type AbstractAction, type PhotoFlexContext } from '.'
+import { RendererParam } from './rendering/renderer-param'
+
 /**
  * an action that can be performed within the application.
  */
@@ -18,7 +21,7 @@ export interface IAction {
   /**
    * The tooltip text for the action.
    */
-  tooltip?: string; // Add optional tooltip property
+  tooltip?: string
   /**
    * The HTML element associated with the action.
    */
@@ -39,14 +42,14 @@ export type CssSelector = string
 export type ActionParam = {
   id: string
   label: string
-  tooltip?: string; // Add optional tooltip property
+  tooltip?: string
 }
 
 export type ActionResizeParam = {
   id: 'resize'
   label: string
   options: { width: number; height: number }[]
-  tooltip?: string; // Add optional tooltip property
+  tooltip?: string // Add optional tooltip property
 }
 
 export type ActionZoomParam = {
@@ -58,8 +61,12 @@ export type ActionZoomParam = {
     step: number
     value: number
   }[]
-  tooltip?: string; // Add optional tooltip property
+  tooltip?: string // Add optional tooltip property
 }
+export type ActionConstructor = new (
+  ctx: PhotoFlexContext,
+  ...args: any[]
+) => AbstractAction
 export type ActionDefinition =
   | 'file'
   | 'camera'
@@ -72,7 +79,7 @@ export type ActionDefinition =
   | 'zoom'
   | ActionZoomParam
   | ActionParam
-  | IAction
+  | ActionConstructor
 /**
  * datanames for ui elements.
  *
@@ -88,10 +95,6 @@ export type DataNameParam = {
   board?: string
   toolbar?: string
   canvas?: string
-}
-export type PhotoflexSizeParam = {
-  value: 'flud' | string
-  resizable?: boolean
 }
 export type PhotoFlexHandlerParam = {
   /**
@@ -123,16 +126,16 @@ export type PhotoFlexInitParam = {
   /**
    * width of image editor canvas
    * ```
-   * "fluid" - means "100%". fill the width of the container.
+   * "fluid" means "100%". fill the width of the container.
    * ```
    * @default "400px"
    */
-  width?: 'fluid' | string | PhotoflexSizeParam
+  width?: 'fluid' | string
   /**
    * height of image editor canvas
    * @default "400px"
    */
-  height?: string | PhotoflexSizeParam
+  height?: 'fluid' | string
   /**
    * scale mode of open image.
    * ```
@@ -155,6 +158,10 @@ export type PhotoFlexInitParam = {
    * actions to be installed
    */
   actions?: ActionDefinition[]
+  /**
+   * used for rendering on canvas
+   */
+  renderers?: RendererParam[]
   handler?: PhotoFlexHandlerParam
   loadContext?: (canvas: HTMLCanvasElement) => CanvasRenderingContext2D
 }
