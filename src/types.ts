@@ -1,4 +1,4 @@
-import { type AbstractAction, type PhotoFlexContext } from '.'
+import { ViewParam, type AbstractAction, type PhotoFlexContext } from '.'
 import { RendererParam } from './rendering/renderer-param'
 
 /**
@@ -162,6 +162,7 @@ export type PhotoFlexInitParam = {
    * used for rendering on canvas
    */
   renderers?: RendererParam[]
+  views?: ViewParam[]
   handler?: PhotoFlexHandlerParam
   loadContext?: (canvas: HTMLCanvasElement) => CanvasRenderingContext2D
 }

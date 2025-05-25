@@ -20,6 +20,9 @@ export class RulerView implements IView {
       this._vRuler
     ).innerText = `${height}`
   }
+  get name() {
+    return 'ruler-view'
+  }
   private _draw(image: ImageSource) {
     const { width, height } = image
     const { width: vw, height: vh } = this._ctx.viewportSize

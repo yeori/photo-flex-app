@@ -26,6 +26,9 @@ export class ImageSourceView implements IView {
   constructor(private readonly _ctx: PhotoFlexContext) {
     this._container = dom.createFromHtml<HTMLDivElement>(this.templates.menu)
   }
+  get name(): string {
+    return 'image-source-view'
+  }
   private get bodyEl() {
     return this._container.querySelector('.inner')!
   }

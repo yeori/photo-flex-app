@@ -64,6 +64,7 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
     DefaultActionParams.capture,
   ],
   renderers: [],
+  views: [{ name: 'image-source-view', use: true }],
   classnames: {
     prefix: 'photoflex',
     board: 'board',
@@ -107,6 +108,9 @@ export class ParameterContext {
   }
   get renderers() {
     return this._param.renderers || DefaultInit.renderers
+  }
+  get views() {
+    return this._param.views || DefaultInit.views
   }
   get ratio(): number {
     const scale = this._param.scale!

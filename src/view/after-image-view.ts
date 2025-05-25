@@ -18,6 +18,9 @@ export class AfterImageView implements IView {
     })
     this._render(0, 0)
   }
+  get name() {
+    return 'after-image-view'
+  }
   bindTo(container: HTMLElement): void {
     container.appendChild(this._canvas)
     const { _ctx } = this

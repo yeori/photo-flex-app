@@ -17,6 +17,9 @@ export class TooltipView implements IView {
       'div[data-photoflex-tooltip-box]'
     )
   }
+  get name() {
+    return 'tooltip-view'
+  }
 
   /**
    * Binds the tooltip handler to the actions container element.

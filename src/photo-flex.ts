@@ -15,15 +15,14 @@ import { CanvasRenderer } from './rendering/canvas-view'
 import { ModalUI } from './component/modal-ui'
 import { ZoomByPinch } from './dnd/zoom-by-pinch'
 import { GridRenderer, GridRenderParam, IRenderer } from './rendering'
-import { AfterImageView } from './view/after-image-view'
 import { bindDimension } from './bind-dimension'
 import { ParameterContext } from './view/param-context'
 import { CaptureEvent } from './event'
 import { SourceManager } from './source-manager'
-import { ImageSourceView } from './view/image-source-view'
-import { TooltipView } from './view/tooltip/tooltip-view'
+import { type TooltipView } from './view/tooltip/tooltip-view'
 import { OpenImageSourceAction } from './view/action/action-open-image-source'
 import { TooltipData } from './view/tooltip/tooltip-data'
+import { ViewHandler } from './view/view-handler'
 
 /**
  * Main class for photo flex.
@@ -40,9 +39,7 @@ export class PhotoFlex implements Viewport {
   private _wheelControl: WheelController
   private _photoFlexContext: PhotoFlexContext
   private _canvasView: CanvasRenderer
-  private _afterImageView: AfterImageView
-  private _imageSourceView: ImageSourceView
-  private _tooltipView: TooltipView
+  private readonly _viewHandle: ViewHandler
   private _modalUI?: ModalUI
   private _sourceManager: SourceManager // Add SourceManager
   private _scaleForExport: number = 1
@@ -83,12 +80,8 @@ export class PhotoFlex implements Viewport {
         order: 1024,
       })
     )
-    this._afterImageView = new AfterImageView(this._photoFlexContext)
-    this._afterImageView.bindTo(this._boardEl)
-    this._imageSourceView = new ImageSourceView(this._photoFlexContext)
-    this._imageSourceView.bindTo(el)
-    this._tooltipView = new TooltipView(this._photoFlexContext)
-    this._tooltipView.bindTo(el)
+    this._viewHandle = new ViewHandler(this._photoFlexContext)
+    this._viewHandle.installView(this._boardEl, el)
 
     this._dnd = new DndContext(this._canvasView.canvas, {
       translate: (_, x, y) => ({
@@ -106,13 +99,9 @@ export class PhotoFlex implements Viewport {
     this._dnd.addDragListener(new ImageDragger(this))
     this._dnd.addPinchListener(new ZoomByPinch(this))
 
-    this._tooltip = this._tooltipView.createTooltip(
-      this._canvasView.canvas,
-      'ready',
-      'center',
-      0,
-      400
-    )
+    this._tooltip = this._viewHandle
+      .getView<TooltipView>('tooltip-view')
+      .createTooltip(this._canvasView.canvas, 'ready', 'center', 0, 400)
     dom.event.bindResizeObserver(this._boardEl, () => {
       this._tooltip.show()
       setTimeout(() => {
@@ -237,7 +226,9 @@ export class PhotoFlex implements Viewport {
     modal.bindTo(container)
     this._modalUI = modal
 
-    new OpenImageSourceAction(this._photoFlexContext).bindTo(container)
+    if (this._viewHandle.isUsing('image-source-view')) {
+      new OpenImageSourceAction(this._photoFlexContext).bindTo(container)
+    }
   }
   /**
    * handles drag event to catch and render dropped image file.
@@ -626,8 +617,10 @@ export class PhotoFlex implements Viewport {
     }
   }
   openImageSourceView() {
-    if (this._imageSourceView) {
+    if (this._viewHandle.isUsing('image-source-view')) {
       this._eventBus.emit('source', { type: 'added', sources: [] })
+    } else {
+      console.warn(`image-source-view is not used.`)
     }
   }
   static init(el: HTMLElement, param?: PhotoFlexInitParam): IPhotoFlexOp {
