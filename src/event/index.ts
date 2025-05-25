@@ -1,15 +1,34 @@
-import { ImageSource } from '../image-source'
+import { type ImageSource } from '../image-source'
 
-export type ZoomEvent = { ratio: number; layer: string }
+export type ImageRect = {
+  cx: number
+  cy: number
+  left: number
+  right: number
+  top: number
+  bottom: number
+  width: number
+  height: number
+}
+export type ZoomEvent = { ratio: number; image: ImageSource }
 /**
  * image move event
  */
 export type MoveEvent = {
-  cx: number
-  cy: number
-  width: number
-  height: number
-  layer: string
+  ratio: number
+  /**
+   * offset(cx, cy) from viewport center(0, 0).
+   * Represents how far the center of the image is from the center of the viewport.
+   */
+  offset: { cx: number; cy: number }
+  /**
+   * Indicates the area of the image to be captured.
+   */
+  rect: ImageRect
+  /**
+   * image
+   */
+  image: ImageSource
 }
 /**
  * image open event
@@ -22,8 +41,17 @@ export type ImageOpenEvent = {
  * viewport resize event
  */
 export type ViewportEvent = {
+  /**
+   * viewport(canvas) width in pixel
+   */
   width: number
+  /**
+   * viewport(canvas) height in pixel
+   */
   height: number
+  /**
+   * image
+   */
   image?: ImageSource
 }
 /**
@@ -66,7 +94,7 @@ export type SourceEvent = {
   /**
    * An array of ImageSources, used for 'added' and 'deleted' if multiple sources are added(deleted) at once.
    */
-  sources?: ImageSource[]
+  images?: ImageSource[]
   /**
    * The error object, only present if type is 'error'.
    */

@@ -71,7 +71,6 @@ export class CanvasRenderer implements IRenderer {
   get canvas() {
     return this._canvas
   }
-
   get ctx() {
     return this._ctx
   }
@@ -95,7 +94,13 @@ export class CanvasRenderer implements IRenderer {
   addLayer(layer: ImageLayer): void {
     this.layers.push(layer)
   }
-
+  getLayerBy(predicate: (layer: ImageLayer) => boolean) {
+    const found = this.layers.find(predicate)
+    if (!found) {
+      throw new Error('layer not found')
+    }
+    return found
+  }
   getLayers(): ImageLayer[] {
     return this.layers
   }
@@ -133,12 +138,12 @@ export class CanvasRenderer implements IRenderer {
   }
 
   getLayerOrigins(): Point[] {
-    return this.layers.map((layer) => Object.assign({}, layer.getCenter()))
+    return this.layers.map((layer) => Object.assign({}, layer.getOffset()))
   }
 
-  setLayerOrigin(index: number, x: number, y: number): void {
+  setLayerOffset(index: number, x: number, y: number): void {
     if (index >= 0 && index < this.layers.length) {
-      this.layers[index].setCenter(x, y)
+      this.layers[index].setOffset(x, y)
     }
   }
   private _resize(
@@ -186,7 +191,7 @@ export class CanvasRenderer implements IRenderer {
     buffer.style.height = `${intrinsicH}px`
     const ctx = buffer.getContext('2d')!
     const layer = this.getFirstLayer()!
-    const c = layer.getCenter()
+    const c = layer.getOffset()
     const { ratio } = layer
     const { width, height } = this
     const area = locateOnCenter({ width, height }, c, 1)

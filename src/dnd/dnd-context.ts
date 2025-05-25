@@ -37,7 +37,13 @@ export class DndContext {
 
   private currentState: TouchStateHandler
   public _rect: DOMRect | undefined
+  /**
+   * relative to viewport(canvas)
+   */
   public startX = 0
+  /**
+   * relative to viewport(canvas)
+   */
   public startY = 0
   public initialDistance = 0
   private _stateMap: Map<TouchState, TouchStateHandler> = new Map()

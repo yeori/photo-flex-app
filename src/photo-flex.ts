@@ -324,19 +324,17 @@ export class PhotoFlex implements Viewport {
     return this._canvasView.getLayerOrigins()
   }
 
-  setLayerOrigin(index: number, cx: number, cy: number): void {
-    this._canvasView.setLayerOrigin(index, cx, cy)
-    const layer = this._canvasView.getFirstLayer()
-    if (layer) {
-      const { width, height } = layer.image
-      this._eventBus.emit('move', {
-        cx,
-        cy,
-        width,
-        height,
-        layer: layer.uuid,
-      })
-    }
+  setLayerOffset(layerUuid: string, cx: number, cy: number): void {
+    const layer = this._canvasView.getLayerBy(
+      (layer) => layer.uuid === layerUuid
+    )
+    layer.setOffset(cx, cy)
+    this._eventBus.emit('move', {
+      ratio: layer.ratio,
+      offset: { cx, cy },
+      rect: layer.getImageRect(this as Viewport),
+      image: layer.image,
+    })
   }
   /**
    * resize canvas size
@@ -379,7 +377,7 @@ export class PhotoFlex implements Viewport {
     const layer = this._canvasView.getFirstLayer()
     let ratio: number = 1
     if (layer) {
-      const center = layer.getCenter()
+      const center = layer.getOffset()
       let { image, ratio: _ratio } = layer
       this._sourceManager.write({
         imageUuid: image.uuid,
@@ -391,18 +389,17 @@ export class PhotoFlex implements Viewport {
       if (param) {
         const { center, scale } = param
         layer.setScale(scale)
-        layer.setCenter(center.x, center.y)
+        layer.setOffset(center.x, center.y)
         ratio = scale
         this._eventBus.emit('move', {
-          cx: center.x,
-          cy: center.y,
-          width: source.width,
-          height: source.height,
-          layer: layer.uuid,
+          ratio: scale,
+          offset: { cx: center.x, cy: center.y },
+          rect: layer.getImageRect(this),
+          image,
         })
         this._eventBus.emit('zoom', {
           ratio: ratio,
-          layer: layer.uuid,
+          image,
         })
       }
     } else {
@@ -418,7 +415,7 @@ export class PhotoFlex implements Viewport {
     this.repaint()
     this._eventBus.emit('source', {
       type: 'activated',
-      sources: [source],
+      images: [source],
     })
     this._eventBus.emit('open', {
       image: source,
@@ -484,7 +481,7 @@ export class PhotoFlex implements Viewport {
     this.repaint()
     this._eventBus.emit('source', {
       type: 'activated',
-      sources,
+      images: sources,
     })
     this._eventBus.emit('open', {
       image: source,
@@ -516,29 +513,27 @@ export class PhotoFlex implements Viewport {
   ) {
     this._canvasView.getLayers().forEach((layer) => {
       let { ratio, origin } = scaleResolver(layer)
-      const { uuid } = layer
+      const { image } = layer
       const newRatio = this._paramContext.resolveScale(ratio)
       if (!origin) {
         const scale = newRatio / layer.ratio
-        origin = layer.getCenter()
+        origin = layer.getOffset()
         origin.x *= scale
         origin.y *= scale
       }
       layer.setScale(newRatio)
-      layer.setCenter(origin.x, origin.y)
+      layer.setOffset(origin.x, origin.y)
       this._tooltip.setText((100 * newRatio).toFixed(1) + '%')
       this._tooltip.show(500)
       this._eventBus.emit('zoom', {
         ratio,
-        layer: uuid,
+        image,
       })
-      const { width, height } = layer.image
       this._eventBus.emit('move', {
-        cx: origin.x,
-        cy: origin.y,
-        width,
-        height,
-        layer: uuid,
+        ratio: newRatio,
+        offset: { cx: origin.x, cy: origin.y },
+        rect: layer.getImageRect(this),
+        image,
       })
     })
     this.repaint()
@@ -618,7 +613,7 @@ export class PhotoFlex implements Viewport {
   }
   openImageSourceView() {
     if (this._viewHandle.isUsing('image-source-view')) {
-      this._eventBus.emit('source', { type: 'added', sources: [] })
+      this._eventBus.emit('source', { type: 'added', images: [] })
     } else {
       console.warn(`image-source-view is not used.`)
     }

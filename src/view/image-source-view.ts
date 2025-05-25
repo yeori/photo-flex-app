@@ -98,22 +98,22 @@ export class ImageSourceView implements IView {
     //Refactor: use correct type SourceEvent
     switch (event.type) {
       case 'added':
-        if (event.sources) {
-          this._sources.push(...event.sources)
+        if (event.images) {
+          this._sources.push(...event.images)
         }
         this.render(parentEl)
         break
       case 'deleted':
-        if (event.sources) {
-          const uuids = new Set<string>(event.sources.map((e) => e.uuid))
+        if (event.images) {
+          const uuids = new Set<string>(event.images.map((e) => e.uuid))
           this._sources = this._sources.filter((s) => !uuids.has(s.uuid))
           this.render(parentEl)
         }
         break
       case 'activated':
-        const { sources } = event
-        if (sources) {
-          this._activeSource = sources[0]
+        const { images } = event
+        if (images) {
+          this._activeSource = images[0]
           this._setActive()
         }
         break

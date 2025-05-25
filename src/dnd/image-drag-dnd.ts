@@ -12,9 +12,9 @@ export class ImageDragger implements DragListener {
   dragging(e: DragEvent): void {
     const { editor } = this
     const { dx, dy } = e
-    editor.getLayers().forEach((_, index) => {
-      editor.setLayerOrigin(
-        index,
+    editor.getLayers().forEach((layer, index) => {
+      editor.setLayerOffset(
+        layer.uuid,
         this._origins[index].x + dx,
         this._origins[index].y + dy
       )

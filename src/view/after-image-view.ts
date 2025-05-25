@@ -1,6 +1,5 @@
 import { type IView } from '.'
 import { type ImageSource } from '../image-source'
-import type { ImageLayer } from '../photo-flex'
 import { type PhotoFlexContext } from '../photo-flex-context'
 import { dom } from '../util'
 
@@ -29,12 +28,12 @@ export class AfterImageView implements IView {
       this._render(width, height, payload.image)
     })
     _ctx.subscribe('zoom', (payload) => {
-      const layer: ImageLayer = this._ctx.op.getLayer(payload.layer)
-      const { width, height } = layer.image
-      this._render(width, height, layer.image)
+      const { image } = payload
+      const { width, height } = image
+      this._render(width, height, image)
     })
-    _ctx.subscribe('move', (payload) => {
-      this._setOrigin(payload.cx, payload.cy)
+    _ctx.subscribe('move', ({ offset }) => {
+      this._setOrigin(offset.cx, offset.cy)
     })
     _ctx.subscribe('source', (payload) => {
       const { type } = payload

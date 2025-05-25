@@ -25,7 +25,7 @@ export class SourceManager {
     this.sources.push(...sources)
     this._emitEvent({
       type: 'added',
-      sources: [...sources],
+      images: [...sources],
       files: files,
     })
   }
@@ -43,7 +43,7 @@ export class SourceManager {
         this.clearActiveSource()
       }
       this._clearCache(removedSource)
-      this._emitEvent({ type: 'deleted', sources: [removedSource] })
+      this._emitEvent({ type: 'deleted', images: [removedSource] })
     }
     return removedSource
   }
@@ -119,7 +119,7 @@ export class SourceManager {
       this.activeSource = null
       this._emitEvent({
         type: 'deactivated',
-        sources: [previouslyActive],
+        images: [previouslyActive],
       })
     }
   }
@@ -134,7 +134,7 @@ export class SourceManager {
     this.activeSource = null
     this._emitEvent({
       type: 'deleted',
-      sources,
+      images: sources,
     })
   }
 
