@@ -13,9 +13,7 @@ export class CaptureAction extends AbstractAction {
 
   protected createElement<K extends HTMLButtonElement>(): K {
     const btn = dom.createFromHtml<K>(`
-      <button class="blue" data-photoflex-action aria-label="Capture viewport image">
-        <span class="material-symbols-outlined">capture</span>
-      </button>
+      <button class="blue" data-photoflex-action aria-label="${this.param.label}"></button>
     `)
     btn.disabled = true
     this.context.subscribe('open', () => {

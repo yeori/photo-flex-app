@@ -10,7 +10,6 @@ export type ImageRect = {
   width: number
   height: number
 }
-export type ZoomEvent = { ratio: number; image: ImageSource }
 /**
  * image move event
  */
@@ -30,12 +29,13 @@ export type MoveEvent = {
    */
   image: ImageSource
 }
+export type ZoomEvent = MoveEvent
 /**
  * image open event
  */
 export type ImageOpenEvent = {
-  image: ImageSource
   ratio: number
+  image: ImageSource
 }
 /**
  * viewport resize event

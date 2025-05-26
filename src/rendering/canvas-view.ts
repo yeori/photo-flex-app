@@ -1,7 +1,7 @@
 import { type IRenderer } from '.'
 import { type ImageLayer } from '../image-layer'
 import { type Viewport, type Point } from '../scale'
-import { type PhotoFlexInitParam } from '../'
+import { type ImageSource, type PhotoFlexInitParam } from '../'
 import { dom } from '../util'
 import { type PhotoFlexContext } from '../photo-flex-context'
 import { locateOnCenter } from '../locator/locate-on-center'
@@ -180,7 +180,7 @@ export class CanvasRenderer implements IRenderer {
   /**
    * capture current viewport
    */
-  async capture(): Promise<{ imageURL: string; name: string }> {
+  async capture(): Promise<{ imageURL: string; image: ImageSource }> {
     const buffer = document.createElement('canvas')
     const { width: W, height: H } = this._context.getViewportSize()
     const intrinsicW = W[0]
@@ -192,7 +192,7 @@ export class CanvasRenderer implements IRenderer {
     const ctx = buffer.getContext('2d')!
     const layer = this.getFirstLayer()!
     const c = layer.getOffset()
-    const { ratio } = layer
+    const { image, ratio } = layer
     const { width, height } = this
     const area = locateOnCenter({ width, height }, c, 1)
 
@@ -210,8 +210,8 @@ export class CanvasRenderer implements IRenderer {
       intrinsicW,
       intrinsicH
     )
-    const { mimeType, uuid: name } = layer.image
+    const { mimeType } = image
     const imageURL = buffer.toDataURL(mimeType)
-    return { imageURL, name }
+    return { imageURL, image }
   }
 }

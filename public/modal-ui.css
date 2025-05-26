@@ -1,7 +1,7 @@
-:host {
+modal-ui {
   z-index: 50;
 }
-.dimmer {
+modal-ui > .dimmer {
   position: absolute;
   top: 0;
   left: 0;
@@ -15,14 +15,14 @@
   opacity: 0;
 }
 
-.dimmer.visible {
+modal-ui > .dimmer.visible {
   width: 100%;
   height: 100%;
   pointer-events: unset;
   opacity: 1;
 }
 
-.content {
+modal-ui > .content {
   position: absolute;
   top: 0;
   left: 0;
@@ -34,7 +34,7 @@
   opacity: 0;
 }
 
-.content.visible {
+modal-ui > .content.visible {
   top: 50%;
   left: 50%;
   border-radius: 5px;

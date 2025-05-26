@@ -19,15 +19,13 @@ export class OpenAction extends AbstractAction {
   protected createElement<K extends HTMLElement>(): K {
     const label = this.param.label
     const id = `photoflex-f-input-${this.type}`
-    const icon = this.type === 'file' ? 'folder_open' : 'photo_camera'
+    // const icon = this.type === 'file' ? 'folder_open' : 'photo_camera'
     const capture = this.type === 'file' ? '' : 'environment'
     const labelEl =
-      dom.createFromHtml<K>(`<label  class="blue" tabindex=0 data-photoflex-action for="${id}" aria-label="${label}">
+      dom.createFromHtml<K>(`<label class="blue" tabindex=0 data-photoflex-action for="${id}" aria-label="${label}">
   <input type="file" id="${id}" accept="image/*" ${
         capture && `capture="${capture}"`
-      } data-photoflex-action title="${label}"></input>
-  <span class="material-symbols-outlined">${icon}</span>
-</label>
+      } data-photoflex-action title="${label}"></input></label>
     `)
     labelEl.role = 'button'
     const fileInput = dom.findOne<HTMLInputElement>(labelEl, 'input')

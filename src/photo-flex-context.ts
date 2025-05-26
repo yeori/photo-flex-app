@@ -30,6 +30,12 @@ export class PhotoFlexContext {
   get paramContext(): ParameterContext {
     return this._paramContext
   }
+  decorateAction<K extends HTMLElement>(type: string, labelEl: K) {
+    this._paramContext.decorateAction(type, labelEl)
+  }
+  getFlex() {
+    return this._flex
+  }
   setActiveImage(imageUuid: string) {
     this._flex.setActiveImage(imageUuid)
   }
@@ -50,6 +56,9 @@ export class PhotoFlexContext {
     const height = this._viewportSizeOf(paramH, 'height')
 
     return { width, height }
+  }
+  getVewportScale() {
+    return this._flex.viewportScale
   }
   resolveDataName(viewType: keyof DataNameParam) {
     const { parameter } = this._paramContext

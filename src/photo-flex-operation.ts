@@ -1,10 +1,5 @@
 import { PhotoFlexEventMap, type EventBus } from './event/event-bus'
-import {
-  type ImageLayer,
-  PhotoFlex,
-  PhotoFlexEvent,
-  Viewport,
-} from './photo-flex'
+import { PhotoFlex, PhotoFlexEvent, Viewport } from './photo-flex'
 import { Unsubscriber } from './event'
 
 export interface IPhotoFlexOp {
@@ -33,6 +28,7 @@ export interface IPhotoFlexOp {
    * @param zoomLevel The new zoom level.
    */
   setZoom(zoomLevel: number): void
+  setOffset(imageUuid: string, x: number, y: number): void
   /**
    * Shows a modal element.
    * @param elem The HTML element to show as a modal.
@@ -54,13 +50,12 @@ export interface IPhotoFlexOp {
    * @param imageUuid The UUID of the image to remove.
    * @param activeImageUuid (optinonal) The UUID of the image to be activated.
    */
-  removeImage(imageUuid: string, activeImageUuid?: string): Promise<boolean>
+  removeImage(imageUuid: string, activeImageUuid?: string): boolean
   /**
    * text form for current zoom level
    * @param metric
    */
   getZoomText<K extends keyof ZoomValueMap>(metric: K): ZoomValueMap[K]
-  getLayer(layerUuid: string): ImageLayer
   /**
    * Captures the viewport and dispatches the `capture` event.
    * ```
@@ -105,6 +100,12 @@ export class PhotoFlexOp implements IPhotoFlexOp {
     target.setZoom(zoomLevel)
     target.repaint()
   }
+  setOffset(imageUuid: string, x: number, y: number): void {
+    const { target } = this
+    const layer = target.getLayerBy((layer) => layer.image.uuid === imageUuid)
+    target.setLayerOffset(layer, x, y)
+    target.repaint()
+  }
   updateZoomBy(zoomDelta: number): void {
     const { target } = this
     target.updateZoomBy(zoomDelta)
@@ -128,7 +129,7 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   openImage(files: File[]): Promise<void> {
     return this.target.setImage(files)
   }
-  removeImage(imageUuid: string, activeImageUuid?: string): Promise<boolean> {
+  removeImage(imageUuid: string, activeImageUuid?: string): boolean {
     return this.target.removeImageByUuid(imageUuid, activeImageUuid)
   }
   getZoomText<K extends keyof ZoomValueMap>(metric: K): ZoomValueMap[K] {
@@ -143,9 +144,6 @@ export class PhotoFlexOp implements IPhotoFlexOp {
         `check metric value [${metric}]. Use 'percent' or 'decimal'`
       )
     }
-  }
-  getLayer(layerUuid: string): ImageLayer {
-    return this.target.getLayer(layerUuid)
   }
   sendCapture(): void {
     this.target.sendCapture()

@@ -26,7 +26,8 @@ export abstract class AbstractAction implements IAction {
     if (!el.ariaLabel) {
       el.ariaLabel = this.label
     }
-    this._ctx!.paramContext.bindTooltip(el, this.param)
+    this._ctx.decorateAction(this.id, el)
+    this._ctx.paramContext.bindTooltip(el, this.param)
     el.addEventListener('click', () => {
       this.run()
     })
@@ -36,7 +37,7 @@ export abstract class AbstractAction implements IAction {
     })
     parent.appendChild(this._el)
   }
-  abstract run(): void
+  run(): void {}
   get element(): HTMLElement {
     return this._el!
   }

@@ -1,8 +1,37 @@
 {
-  "name": "photo-flex-app",
-  "private": true,
-  "version": "0.0.0",
+  "name": "photoflex",
+  "private": false,
+  "version": "0.0.5",
+  "license": "MIT",
   "type": "module",
+  "bugs": {
+    "url": "https://github.com/yeori/photoflex-app/issues",
+    "email": "yeori.seo@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yeori/photoflex-app"
+  },
+  "keywords": [
+    "image editor",
+    "image crop"
+  ],
+  "author": {
+    "name": "yeori",
+    "email": "yeori.seo@gmail.com"
+  },
+  "files": [
+    "dist"
+  ],
+  "module": "./dist/photo-flex.js",
+  "exports": {
+    ".": {
+      "import": "./dist/photo-flex.js"
+    },
+    "./photoflex-modal-ui.css": "./dist/modal-ui.css",
+    "./photoflex.css": "./dist/photo-flex.css"
+  },
+  "types": "./dist/photo-flex.d.ts",
   "scripts": {
     "dev": "vite",
     "test": "vitest",

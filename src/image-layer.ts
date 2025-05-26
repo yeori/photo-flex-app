@@ -18,7 +18,7 @@ export class ImageLayer {
     private _image: ImageSource,
     private readonly _translateToSceen: CanvasOriginResolver,
     /**
-     * offset from center of viewport(0, 0) to center of image.
+     * offset from center of viewport(0, 0)
      * ```
      * offset = image.center - viewport.center
      * ```

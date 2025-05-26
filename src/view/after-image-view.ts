@@ -28,12 +28,15 @@ export class AfterImageView implements IView {
       this._render(width, height, payload.image)
     })
     _ctx.subscribe('zoom', (payload) => {
-      const { image } = payload
+      const { image, offset } = payload
       const { width, height } = image
+      const scale = _ctx.getVewportScale()
+      this._setOrigin(offset.cx, offset.cy, scale)
       this._render(width, height, image)
     })
     _ctx.subscribe('move', ({ offset }) => {
-      this._setOrigin(offset.cx, offset.cy)
+      const scale = _ctx.getVewportScale()
+      this._setOrigin(offset.cx, offset.cy, scale)
     })
     _ctx.subscribe('source', (payload) => {
       const { type } = payload
@@ -42,9 +45,11 @@ export class AfterImageView implements IView {
       }
     })
   }
-  private _setOrigin(x: number, y: number) {
+  private _setOrigin(x: number, y: number, scale: number) {
     dom.style(this._canvas, {
-      transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+      transform: `translate(calc(-50% + ${x * scale}px), calc(-50% + ${
+        y * scale
+      }px)) scale(${scale})`,
     })
   }
   private _render(width: number, height: number, image?: ImageSource) {

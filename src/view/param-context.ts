@@ -1,7 +1,9 @@
+import { type ImageSource } from '../image-source'
 import { mergeParam } from '../merge-param'
-import { Viewport } from '../scale'
+import { type Viewport } from '../scale'
 import {
   ActionDefinition,
+  ActionNameList,
   ActionParam,
   ActionResizeParam,
   ActionZoomParam,
@@ -47,7 +49,30 @@ const DefaultActionParams: Record<string, ActionParam> = {
     tooltip: 'Capture Viewport',
   },
 }
-
+const iconMap: Record<ActionNameList, string> = {
+  file: 'folder_open',
+  camera: 'photo_camera',
+  resize: 'aspect_ratio',
+  'fit-cover': 'fullscreen',
+  'fit-contain': 'fit_screen',
+  'fit-real': 'view_real_size',
+  zoom: '',
+  capture: 'capture',
+}
+/**
+ * default action decorator.
+ * @param actionId
+ * @param el
+ */
+const decorateAction = (actionId: string, el: HTMLElement) => {
+  const icon = iconMap[actionId as ActionNameList]
+  if (icon) {
+    dom.createFromHtml(
+      `<span class="material-symbols-outlined">${icon}</span>`,
+      el
+    )
+  }
+}
 const DefaultInit: Required<PhotoFlexInitParam> = {
   width: '400px',
   height: '400px',
@@ -64,7 +89,10 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
     DefaultActionParams.capture,
   ],
   renderers: [],
-  views: [{ name: 'image-source-view', use: true }],
+  views: [
+    { name: 'image-source-view', use: true },
+    { name: 'after-image-view', use: true },
+  ],
   classnames: {
     prefix: 'photoflex',
     board: 'board',
@@ -72,7 +100,7 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
     canvas: 'canvas',
     toolbar: 'toolbar',
   },
-  handler: { name: (name, ext) => `${name}${ext}` },
+  handler: { name: (image) => `${image.name}`, action: decorateAction },
   loadContext: (canvas) => canvas.getContext('2d')!,
 }
 
@@ -192,24 +220,14 @@ export class ParameterContext {
   }
   /**
    * find default action for the action id
-   * @param defintion action id
+   * @param actionId action id
    */
-  getDefaultAction(defintion: ActionDefinition): ActionParam {
-    if (typeof defintion === 'string') {
-      const defaultParam = DefaultActionParams[defintion]
-      if (!defaultParam) {
-        throw new Error(`Unknown default action id: ${defintion}`)
-      }
-      return { ...defaultParam } // Return a copy
-    } else if ('id' in defintion && typeof defintion.id === 'string') {
-      const defaultParam = DefaultActionParams[defintion.id]
-      if (defaultParam) {
-        return { ...defaultParam, ...defintion }
-      }
-      return { ...defintion }
-    } else {
-      throw new Error(`Invalid action definition type: ${typeof defintion}`)
+  getDefaultActionParam(actionId: string): ActionParam {
+    const param = DefaultActionParams[actionId]
+    if (!param) {
+      throw new Error(`Unknown default action id: ${actionId}`)
     }
+    return dom.deepClone(param)
   }
   resolveScale(scale: number): number {
     const { min, max } = this.getOptionForZoomAction()
@@ -217,22 +235,14 @@ export class ParameterContext {
     val = Math.min(max, val)
     return val
   }
-  private parseFileName(fileName: string) {
-    let pos = fileName.lastIndexOf('.')
-    if (pos < 0) {
-      pos = fileName.length
-    }
-    const name = fileName.substring(0, pos)
-    const ext = fileName.substring(pos)
-    return { name, ext }
-  }
-  resolveFileName(fileName: string, viewport: Viewport) {
+  resolveFileName(image: ImageSource, viewport: Viewport) {
     const nameHandler = this._param.handler?.name || DefaultInit.handler.name!
-    const { name, ext } = this.parseFileName(fileName)
-    return nameHandler(name, ext, viewport)
+    return nameHandler(image, viewport)
   }
-
   bindTooltip(el: HTMLElement, param: ActionParam) {
     el.dataset.photoflexTooltip = param.tooltip || param.label
+  }
+  decorateAction<K extends HTMLElement>(type: string, labelEl: K) {
+    this._param.handler!.action!(type, labelEl)
   }
 }

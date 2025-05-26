@@ -16,9 +16,11 @@ export class ViewHandler {
         switch (param.name) {
           case 'after-image-view':
             view = new AfterImageView(this._ctx)
+            view.bindTo(boardEl)
             break
           case 'image-source-view':
             view = new ImageSourceView(this._ctx)
+            view.bindTo(rootEl)
             break
           default:
             throw new Error(
@@ -26,7 +28,6 @@ export class ViewHandler {
             )
         }
         if (view) {
-          view.bindTo(view.name === 'tooltip-view' ? rootEl : boardEl)
           this._views.push(view)
         }
       })

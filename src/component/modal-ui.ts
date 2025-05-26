@@ -7,20 +7,12 @@ export class ModalUI extends HTMLElement {
   private _visible: boolean = false
   constructor(readonly op: IPhotoFlexOp) {
     super()
-    this.attachShadow({ mode: 'open' })
-    this.shadowRoot!.innerHTML = `<link rel="stylesheet" href="/modal-ui.css">`
   }
   private get _modalEl(): HTMLElement {
-    if (!this.shadowRoot) {
-      throw new Error('not initialized')
-    }
-    return this.shadowRoot.querySelector('.content')!
+    return this.querySelector('.content')!
   }
   private get _dimmerEl(): HTMLElement {
-    if (!this.shadowRoot) {
-      throw new Error('not initialized')
-    }
-    return this.shadowRoot.querySelector('.dimmer')!
+    return this.querySelector('.dimmer')!
   }
   private clear(): void {
     dom.remove(this._modalEl, this._dimmerEl)
@@ -30,7 +22,7 @@ export class ModalUI extends HTMLElement {
   }
   connectedCallback() {}
   show(content: HTMLElement) {
-    dom.creates<ShadowRoot>(this.shadowRoot!, '.modal.dimmer', '.modal.content')
+    dom.creates<ModalUI>(this, '.modal.dimmer', '.modal.content')
     this._visible = true
     setTimeout(() => {
       ;[this._dimmerEl, this._modalEl].forEach((el) =>
@@ -42,7 +34,6 @@ export class ModalUI extends HTMLElement {
       })
     })
   }
-
   hide() {
     if (!this._visible) {
       return
@@ -66,3 +57,5 @@ export class ModalUI extends HTMLElement {
     this._visible = false
   }
 }
+
+customElements.define('modal-ui', ModalUI)

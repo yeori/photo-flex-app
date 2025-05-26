@@ -13,35 +13,13 @@ export class DimensionSelector extends HTMLElement {
     dimensions?: { width: number; height: number }[]
   ) {
     super()
-    this.attachShadow({ mode: 'open' })
+    // this.attachShadow({ mode: 'open' })
     if (dimensions) {
       this.dimensions = dimensions
     }
-    this.bindStyle()?.then(this.render.bind(this))
+    this.render()
   }
-  private bindStyle() {
-    const { shadowRoot: root } = this
-    if (!root) {
-      return
-    }
-    const link0 = document.createElement('link')
-    const prm0 = new Promise((resolve) => {
-      link0.onload = resolve
-    })
-    link0.rel = 'stylesheet'
-    link0.href =
-      'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined'
-    root.appendChild(link0)
 
-    const link = document.createElement('link')
-    link.rel = 'stylesheet'
-    const prm1 = new Promise((resolve) => {
-      link.onload = resolve
-    })
-    link.href = '/photo-flex.css'
-    root.appendChild(link)
-    return Promise.all([prm0, prm1])
-  }
   private _renderDimension(menu: HTMLMenuElement) {
     dom.emptify(menu)
     this.dimensions.forEach(({ width, height }, index) => {
@@ -59,44 +37,42 @@ export class DimensionSelector extends HTMLElement {
     )
   }
   private render() {
-    const { shadowRoot: root } = this
-    if (root) {
-      const menu = dom.create<HTMLMenuElement>('menu[data-dimension-selector]')
-      root.appendChild(menu)
-      this._renderDimension(menu)
-      dom.event.click(menu, 'button[data-width][data-height]', (e) => {
-        const button = e.target as HTMLButtonElement
-        const width = parseInt(button.dataset.width || '')
-        const height = parseInt(button.dataset.height || '')
+    const root = this
+    const menu = dom.create<HTMLMenuElement>('menu[data-dimension-selector]')
+    root.appendChild(menu)
+    this._renderDimension(menu)
+    dom.event.click(menu, 'button[data-width][data-height]', (e) => {
+      const button = e.target as HTMLButtonElement
+      const width = parseInt(button.dataset.width || '')
+      const height = parseInt(button.dataset.height || '')
 
-        if (width && height) {
-          this.dispatchEvent(
-            new CustomEvent('dimension-selected', { detail: { width, height } })
-          )
-          this.ctx.op.resizeViewport(width, height)
-        }
-      })
-      dom.event.click(menu, 'button.close', (e) => {
-        const btn = dom.closest<HTMLButtonElement>(
-          e.target as HTMLButtonElement,
-          'button.close'
+      if (width && height) {
+        this.dispatchEvent(
+          new CustomEvent('dimension-selected', { detail: { width, height } })
         )
-        if (!btn) {
-          return
-        }
-        const index = parseInt(btn.dataset.index || '')
-        this.dimensions.splice(index, 1)
+        this.ctx.op.resizeViewport(width, height)
+      }
+    })
+    dom.event.click(menu, 'button.close', (e) => {
+      const btn = dom.closest<HTMLButtonElement>(
+        e.target as HTMLButtonElement,
+        'button.close'
+      )
+      if (!btn) {
+        return
+      }
+      const index = parseInt(btn.dataset.index || '')
+      this.dimensions.splice(index, 1)
+      this._renderDimension(menu)
+    })
+    dom.event.click(menu, 'button.add', () => {
+      const input = dom.findOne<HTMLInputElement>(menu, 'input.dim')
+      const dim = this._parseDimension(input.value)
+      if (dim) {
+        this.dimensions.push({ width: dim[0], height: dim[1] })
         this._renderDimension(menu)
-      })
-      dom.event.click(menu, 'button.add', () => {
-        const input = dom.findOne<HTMLInputElement>(menu, 'input.dim')
-        const dim = this._parseDimension(input.value)
-        if (dim) {
-          this.dimensions.push({ width: dim[0], height: dim[1] })
-          this._renderDimension(menu)
-        }
-      })
-    }
+      }
+    })
   }
   /**
    * parse dimension from the value

@@ -1,16 +1,20 @@
-import { ActionZoomParam, IAction } from '../../types'
-import { PhotoFlexContext } from '../../photo-flex-context'
-import { ActionDefinition, ActionResizeParam } from '../../types'
+import {
+  type ActionConstructor,
+  type ActionNameList,
+  type IAction,
+} from '../../types'
+import { type PhotoFlexContext } from '../../photo-flex-context'
+import { type ActionDefinition } from '../../types'
 import { dom } from '../../util'
 import { ActionFitCover } from './action-fit-scale'
-import { ResizeAction } from './action-resize'
 import { ZoomAction } from './action-zoom'
 import { OpenAction } from './action-open'
 import { CaptureAction } from './action-capture'
+import { ResizeAction } from './action-resize'
 
 export class ActionFactory {
   private _el: HTMLElement
-  private _defaultActions: Map<string, IAction> = new Map()
+  private _constructors: Map<ActionNameList, ActionConstructor> = new Map()
   private _actions: IAction[] = []
   constructor(container: HTMLElement, private readonly _ctx: PhotoFlexContext) {
     this._el = dom.create(
@@ -19,43 +23,28 @@ export class ActionFactory {
     )
     this._installDefaultActions()
   }
-  private _addToMap(action: IAction) {
-    this._defaultActions.set(action.id, action)
-  }
   private _installDefaultActions() {
-    const { paramContext: pctx } = this._ctx
-    this._addToMap(new OpenAction(this._ctx, pctx.getDefaultAction('file')))
-    this._addToMap(new OpenAction(this._ctx, pctx.getDefaultAction('camera')))
-    this._addToMap(
-      new ResizeAction(
-        this._ctx,
-        pctx.getDefaultAction('resize') as ActionResizeParam
-      )
-    )
-    this._addToMap(new ZoomAction(this._ctx, pctx.getDefaultAction('zoom')))
-    this._addToMap(
-      new ActionFitCover(this._ctx, 'cover', pctx.getDefaultAction('fit-cover'))
-    )
-    this._addToMap(
-      new ActionFitCover(
-        this._ctx,
-        'contain',
-        pctx.getDefaultAction('fit-contain')
-      )
-    )
-    this._addToMap(
-      new ActionFitCover(this._ctx, 'real', pctx.getDefaultAction('fit-real'))
-    )
-    this._addToMap(
-      new CaptureAction(this._ctx, pctx.getDefaultAction('capture'))
-    )
+    this._constructors.set('file', OpenAction)
+    this._constructors.set('camera', OpenAction)
+    this._constructors.set('resize', ResizeAction)
+    this._constructors.set('capture', CaptureAction)
+    this._constructors.set('camera', OpenAction)
+    this._constructors.set('fit-contain', ActionFitCover)
+    this._constructors.set('fit-cover', ActionFitCover)
+    this._constructors.set('fit-real', ActionFitCover)
+    this._constructors.set('zoom', ZoomAction)
   }
   installActions(params: ActionDefinition[]) {
     params.forEach((param) => {
       if (typeof param === 'string') {
         const id = `${param}`
-        const action = this._defaultActions.get(id)
-        if (action) {
+        const constructor = this._constructors.get(id as ActionNameList)
+        if (constructor) {
+          const { paramContext: pctx } = this._ctx
+          const action = new constructor(
+            this._ctx,
+            pctx.getDefaultActionParam(id)
+          )
           this.installAction(action)
         } else {
           console.warn(
@@ -67,20 +56,14 @@ export class ActionFactory {
           this.installAction(new param(this._ctx))
         }
       } else if ('id' in param) {
-        switch (param.id) {
-          case 'resize':
-            this.installAction(
-              new ResizeAction(this._ctx, param as ActionResizeParam)
-            )
-            break
-          case 'zoom':
-            this.installAction(
-              new ZoomAction(this._ctx, param as ActionZoomParam)
-            )
-            break
-          default:
-            console.warn(`action id "${param.id}" is not supported.`)
-            break
+        const constructor = this._constructors.get(param.id as ActionNameList)
+        if (constructor) {
+          const action = new constructor(this._ctx, param)
+          this.installAction(action)
+        } else {
+          console.warn(
+            `[PHOTOFLEX-APP] ACTION_ID_NOT_FOUND: no such action(${param.id})`
+          )
         }
       }
     })

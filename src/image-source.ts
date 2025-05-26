@@ -1,12 +1,13 @@
+import { ImageMetaData } from './photo-flex'
 import { Viewport } from './scale'
 import { dom } from './util'
 
-export class ImageSource implements Viewport {
+export class ImageSource implements Viewport, ImageMetaData {
   private _map: ImageBitmap | undefined
   private _uuid: string
   constructor(
     _map: ImageBitmap,
-    readonly meta: { name: string; size: number; type: string }
+    private readonly _meta: { name: string; size: number; type: string }
   ) {
     this._map = _map
     this._uuid = dom.randomKey()
@@ -33,22 +34,32 @@ export class ImageSource implements Viewport {
    * File name
    */
   get name(): string {
-    return this.meta.name
+    return this._meta.name
   }
   /**
    * mime type
    */
   get mimeType(): string {
-    return this.meta.type
+    return this._meta.type
   }
   /**
    * File size in bytes
    */
   get fileSize(): number {
-    return this.meta.size
+    return this._meta.size
   }
   get type(): string {
-    return this.meta.type
+    return this._meta.type
+  }
+  parseName(): [string, string] {
+    const { name } = this
+    let pos = name.lastIndexOf('.')
+    if (pos < 0) {
+      pos = name.length
+    }
+    const prefix = name.substring(0, pos)
+    const ext = name.substring(pos)
+    return [prefix, ext]
   }
   equals(other: ImageSource) {
     return other && other.uuid === this.uuid
@@ -68,6 +79,6 @@ export class ImageSource implements Viewport {
     return new ImageSource(bitmap, { name, size, type })
   }
   static fromSource(source: ImageSource) {
-    return new ImageSource(source.bitmap, source.meta)
+    return new ImageSource(source.bitmap, source._meta)
   }
 }

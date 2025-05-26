@@ -25,7 +25,7 @@ import { TooltipData } from './view/tooltip/tooltip-data'
 import { ViewHandler } from './view/view-handler'
 
 /**
- * Main class for photo flex.
+ * Main class for photoflex.
  */
 export class PhotoFlex implements Viewport {
   private _boardEl: HTMLDivElement
@@ -41,8 +41,14 @@ export class PhotoFlex implements Viewport {
   private _canvasView: CanvasRenderer
   private readonly _viewHandle: ViewHandler
   private _modalUI?: ModalUI
-  private _sourceManager: SourceManager // Add SourceManager
+  private _sourceManager: SourceManager
+  //@ts-ignore
   private _scaleForExport: number = 1
+  /**
+   * ratio `canvas.width / param.width`
+   *
+   */
+  private _scaleForViewport: number = 1
 
   private _tooltip: TooltipData
 
@@ -120,7 +126,9 @@ export class PhotoFlex implements Viewport {
   get height() {
     return this._canvasView.height
   }
-
+  get viewportScale() {
+    return this._scaleForViewport
+  }
   get scaleMode(): ScaleMode {
     const { scaleMode: initialZoom } = this._paramContext
     if (initialZoom === 'cover') {
@@ -141,7 +149,6 @@ export class PhotoFlex implements Viewport {
     return this._modalUI
   }
   private _resolveScaleForExport(width: number, height: number) {
-    // const outer = el.parentElement!.getBoundingClientRect()
     return Math.min(1, height / width)
   }
   private _handleResize() {
@@ -160,6 +167,19 @@ export class PhotoFlex implements Viewport {
     }
     if (width > 0 || height > 0) {
       this._canvasView.setSize(width, height)
+      this._scaleForViewport = rect.width / this._paramContext.getWidth()[0]
+
+      const layer = this._canvasView.getFirstLayer()
+      if (!layer) {
+        return
+      }
+      const c = layer.getOffset()
+      this._eventBus.emit('move', {
+        ratio: layer.ratio,
+        offset: { cx: c.x, cy: c.y },
+        rect: layer.getImageRect(this as Viewport),
+        image: layer.image,
+      })
       this.repaint()
     }
   }
@@ -168,7 +188,6 @@ export class PhotoFlex implements Viewport {
     const [pixelWidth] = this._paramContext.getWidth()
     const [pixelHeight, hUnit] = this._paramContext.getHeight()
     this._scaleForExport = this._resolveScaleForExport(pixelWidth, pixelHeight)
-    console.log(this._scaleForExport)
     const widthResizable = this._paramContext.isResizable('width')
     const heightResizable = this._paramContext.isResizable('height')
     if (this._canvasView) {
@@ -221,7 +240,6 @@ export class PhotoFlex implements Viewport {
     })
   }
   private installUI(container: HTMLElement) {
-    customElements.define('modal-ui', ModalUI)
     const modal = new ModalUI(this._operator)
     modal.bindTo(container)
     this._modalUI = modal
@@ -319,15 +337,14 @@ export class PhotoFlex implements Viewport {
   getLayers(): ImageLayer[] {
     return this._canvasView.getLayers()
   }
-
+  getLayerBy(predicate: (layer: ImageLayer) => boolean): ImageLayer {
+    return this._canvasView.getLayerBy(predicate)
+  }
   getLayerOrigins(): Point[] {
     return this._canvasView.getLayerOrigins()
   }
 
-  setLayerOffset(layerUuid: string, cx: number, cy: number): void {
-    const layer = this._canvasView.getLayerBy(
-      (layer) => layer.uuid === layerUuid
-    )
+  setLayerOffset(layer: ImageLayer, cx: number, cy: number): void {
     layer.setOffset(cx, cy)
     this._eventBus.emit('move', {
       ratio: layer.ratio,
@@ -391,16 +408,6 @@ export class PhotoFlex implements Viewport {
         layer.setScale(scale)
         layer.setOffset(center.x, center.y)
         ratio = scale
-        this._eventBus.emit('move', {
-          ratio: scale,
-          offset: { cx: center.x, cy: center.y },
-          rect: layer.getImageRect(this),
-          image,
-        })
-        this._eventBus.emit('zoom', {
-          ratio: ratio,
-          image,
-        })
       }
     } else {
       ratio = this._calculateScale(source)
@@ -416,10 +423,6 @@ export class PhotoFlex implements Viewport {
     this._eventBus.emit('source', {
       type: 'activated',
       images: [source],
-    })
-    this._eventBus.emit('open', {
-      image: source,
-      ratio,
     })
   }
   private async _fileToImage(files: File[]) {
@@ -459,8 +462,6 @@ export class PhotoFlex implements Viewport {
     }
 
     const source = sources[0]
-    // const ratio: number = this._calculateScale(source)
-    // const origin = { x: 0, y: 0 }
     const { center: origin, scale: ratio } = this._sourceManager.read(
       source.uuid
     )!
@@ -488,10 +489,7 @@ export class PhotoFlex implements Viewport {
       ratio,
     })
   }
-  async removeImageByUuid(
-    uuid: string,
-    activeImageUuid?: string
-  ): Promise<boolean> {
+  removeImageByUuid(uuid: string, activeImageUuid?: string): boolean {
     const imageToDel = this._sourceManager.getSourceBy(
       (image) => image.uuid === uuid
     )
@@ -502,7 +500,11 @@ export class PhotoFlex implements Viewport {
       this._canvasView.removeLayerBy((_layer) => _layer.image.uuid === uuid)
     }
     this.repaint()
-    return Promise.resolve(true)
+    this._eventBus.emit('source', {
+      type: 'deleted',
+      images: [imageToDel],
+    })
+    return true
   }
   getZoomLevel(): number {
     const firstLayer = this._canvasView.getFirstLayer()
@@ -511,32 +513,32 @@ export class PhotoFlex implements Viewport {
   private _updateZoom(
     scaleResolver: (layer: ImageLayer) => { ratio: number; origin?: Point }
   ) {
-    this._canvasView.getLayers().forEach((layer) => {
-      let { ratio, origin } = scaleResolver(layer)
-      const { image } = layer
-      const newRatio = this._paramContext.resolveScale(ratio)
-      if (!origin) {
-        const scale = newRatio / layer.ratio
-        origin = layer.getOffset()
-        origin.x *= scale
-        origin.y *= scale
-      }
-      layer.setScale(newRatio)
-      layer.setOffset(origin.x, origin.y)
-      this._tooltip.setText((100 * newRatio).toFixed(1) + '%')
-      this._tooltip.show(500)
-      this._eventBus.emit('zoom', {
-        ratio,
-        image,
-      })
-      this._eventBus.emit('move', {
-        ratio: newRatio,
-        offset: { cx: origin.x, cy: origin.y },
-        rect: layer.getImageRect(this),
-        image,
-      })
-    })
+    const layer = this._canvasView.getFirstLayer()
+    if (!layer) {
+      return
+    }
+    let { ratio, origin } = scaleResolver(layer)
+    const { image } = layer
+    const newRatio = this._paramContext.resolveScale(ratio)
+    if (!origin) {
+      const scale = newRatio / layer.ratio
+      origin = layer.getOffset()
+      origin.x *= scale
+      origin.y *= scale
+    }
+    layer.setScale(newRatio)
+    layer.setOffset(origin.x, origin.y)
+    this._tooltip.setText((100 * newRatio).toFixed(1) + '%')
+    this._tooltip.show(500)
+    const evt = {
+      ratio: newRatio,
+      offset: { cx: origin.x, cy: origin.y },
+      rect: layer.getImageRect(this),
+      image,
+    }
+    this._eventBus.emit('zoom', evt)
     this.repaint()
+    return evt
   }
   updateZoomBy(zoomDelta: number): void {
     this._updateZoom((layer) => ({
@@ -585,10 +587,10 @@ export class PhotoFlex implements Viewport {
     link.click()
   }
   private async _capture(type: 'dataurl'): Promise<CaptureEvent> {
-    const { imageURL, name } = await this._canvasView.capture()
+    const { imageURL, image } = await this._canvasView.capture()
     const length = dom.image.inferSize(imageURL)
     const fileName = this._paramContext.resolveFileName(
-      name,
+      image,
       this._canvasView.viewportSize
     )
     const dimension = this._canvasView.viewportSize

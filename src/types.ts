@@ -1,5 +1,5 @@
-import { ViewParam, type AbstractAction, type PhotoFlexContext } from '.'
-import { RendererParam } from './rendering/renderer-param'
+import { type ViewParam, type PhotoFlexContext } from '.'
+import { type RendererParam } from './rendering/renderer-param'
 
 /**
  * an action that can be performed within the application.
@@ -66,8 +66,9 @@ export type ActionZoomParam = {
 export type ActionConstructor = new (
   ctx: PhotoFlexContext,
   ...args: any[]
-) => AbstractAction
-export type ActionDefinition =
+) => IAction
+
+export type ActionNameList =
   | 'file'
   | 'camera'
   | 'capture'
@@ -75,8 +76,10 @@ export type ActionDefinition =
   | 'fit-cover'
   | 'fit-contain'
   | 'fit-real'
-  | ActionResizeParam
   | 'zoom'
+export type ActionDefinition =
+  | ActionNameList
+  | ActionResizeParam
   | ActionZoomParam
   | ActionParam
   | ActionConstructor
@@ -105,19 +108,16 @@ export type PhotoFlexHandlerParam = {
    * @returns a new filename
    */
   name?: (
-    /**
-     * `youer-img` in "your-img.png"
-     */
-    name: string,
-    /**
-     * `.png` in "your-img.png"
-     */
-    ext: string,
+    image: ImageMetaData,
     /**
      * donwloaded(captured) image size in pixel
      */
     dim: { width: number; height: number }
   ) => string
+  /**
+   * called when an action instance is created.
+   */
+  action?: (actionId: string, el: HTMLElement) => void
 }
 /**
  * initial configuration paramters
@@ -165,4 +165,23 @@ export type PhotoFlexInitParam = {
   views?: ViewParam[]
   handler?: PhotoFlexHandlerParam
   loadContext?: (canvas: HTMLCanvasElement) => CanvasRenderingContext2D
+}
+
+export type ImageMetaData = {
+  /**
+   * file name of the image
+   */
+  name: string
+  /**
+   * unique id
+   */
+  uuid: string
+  /**
+   * return [prefix, extension], for file name.
+   */
+  parseName(): [string, string]
+  /**
+   * mime type
+   */
+  type: string
 }

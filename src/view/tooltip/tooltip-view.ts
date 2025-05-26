@@ -11,8 +11,7 @@ export class TooltipView implements IView {
   private readonly SHOW_DELAY = 250
   private readonly HIDE_DELAY = 100
 
-  constructor(private readonly _ctx: PhotoFlexContext) {
-    console.log(this._ctx)
+  constructor(_ctx: PhotoFlexContext) {
     this._tooltipBoxEl = dom.create<HTMLDivElement>(
       'div[data-photoflex-tooltip-box]'
     )
