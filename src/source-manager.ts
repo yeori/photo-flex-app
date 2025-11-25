@@ -21,7 +21,7 @@ export class SourceManager {
    * Adds image sources to the manager.
    * @param sources image sources to add
    */
-  public addSources(sources: ImageSource[], files: File[]): void {
+  public addSources(sources: ImageSource[], files?: File[]): void {
     this.sources.push(...sources)
     this._emitEvent({
       type: 'added',

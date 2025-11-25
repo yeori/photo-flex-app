@@ -1,7 +1,7 @@
 {
   "name": "photoflex",
   "private": false,
-  "version": "0.0.5",
+  "version": "0.0.6",
   "license": "MIT",
   "type": "module",
   "bugs": {
@@ -26,6 +26,7 @@
   "module": "./dist/photo-flex.js",
   "exports": {
     ".": {
+      "types": "./dist/photo-flex.d.ts",
       "import": "./dist/photo-flex.js"
     },
     "./photoflex-modal-ui.css": "./dist/modal-ui.css",

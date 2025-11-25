@@ -1,4 +1,4 @@
-import { type PhotoFlexInitParam } from './types'
+import { BlobData, type PhotoFlexInitParam } from './types'
 import { DndContext } from './dnd/dnd-context'
 import { ImageSource } from './image-source'
 import { type ScaleMode, type Viewport, type Point } from './scale'
@@ -440,6 +440,21 @@ export class PhotoFlex implements Viewport {
     }
     return sources
   }
+  async openBlobs(blobs: BlobData[]): Promise<void> {
+    let k: number = 100
+    const randomName = () => {
+      return `file-${k++}`
+    }
+    const sources: ImageSource[] = []
+    for (const blob of blobs) {
+      const source = await ImageSource.fromBlob(
+        blob.data,
+        blob.name || randomName()
+      )
+      sources.push(source)
+    }
+    await this._openImageSource(sources)
+  }
   async setImage(files: File[], clear: boolean = true): Promise<void> {
     if (!files || files.length === 0) {
       console.warn('PhotoFlex.setImage: No files provided.')
@@ -447,6 +462,13 @@ export class PhotoFlex implements Viewport {
     }
 
     const sources: ImageSource[] = await this._fileToImage(files)
+    await this._openImageSource(sources, clear)
+  }
+  private async _openImageSource(
+    sources: ImageSource[],
+    clear: boolean = true,
+    files?: File[]
+  ) {
     if (sources.length === 0) {
       console.warn('PhotoFlex.setImage: No valid image files provided.')
       return

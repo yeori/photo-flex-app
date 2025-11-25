@@ -1,5 +1,5 @@
 import { PhotoFlexEventMap, type EventBus } from './event/event-bus'
-import { PhotoFlex, PhotoFlexEvent, Viewport } from './photo-flex'
+import { BlobData, PhotoFlex, PhotoFlexEvent, Viewport } from './photo-flex'
 import { Unsubscriber } from './event'
 
 export interface IPhotoFlexOp {
@@ -45,6 +45,7 @@ export interface IPhotoFlexOp {
   /** Sets the zoom level to the photo's original size. */
   fitToRealSize(): void
   openImage(files: File[]): Promise<void>
+  openBlobs(blobs: BlobData[]): Promise<void>
   /**
    * Removes an image from the editor.
    * @param imageUuid The UUID of the image to remove.
@@ -128,6 +129,9 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   }
   openImage(files: File[]): Promise<void> {
     return this.target.setImage(files)
+  }
+  openBlobs(blobs: BlobData[]): Promise<void> {
+    return this.target.openBlobs(blobs)
   }
   removeImage(imageUuid: string, activeImageUuid?: string): boolean {
     return this.target.removeImageByUuid(imageUuid, activeImageUuid)

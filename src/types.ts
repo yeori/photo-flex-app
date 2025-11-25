@@ -166,7 +166,10 @@ export type PhotoFlexInitParam = {
   handler?: PhotoFlexHandlerParam
   loadContext?: (canvas: HTMLCanvasElement) => CanvasRenderingContext2D
 }
-
+export type BlobData = {
+  name?: string
+  data: Blob
+}
 export type ImageMetaData = {
   /**
    * file name of the image
