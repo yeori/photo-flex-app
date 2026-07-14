@@ -39,13 +39,45 @@ export interface IAction {
  * css selector syntax to
  */
 export type CssSelector = string
-export type ActionIconRender = (actionId: string, className: string) => HTMLElement | string
+/**
+ * Used to create an icon for an action (e.g., buttons). It is embedded into `button[data-photoflex-action]`
+ *
+ * @param actionId - The unique identifier of the action to which this icon is applied (e.g., `'zoom'`, `'resize'`, `'capture'`).
+ * @param className - The predefined CSS class name for the icon element.
+ * @returns The `HTMLElement` to render, or a `string` containing HTML/SVG markup.
+ *
+ * #### 1. SVG
+ * ```typescript
+ * const svgIconRenderer: ActionIconRender = (actionId, className) => {
+ *   if (actionId === 'zoom') {
+ *     return `<svg class="${className}" viewBox="0 0 24 24">
+ *       <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5..."/>
+ *     </svg>`;
+ *   }
+ *   return `<i class="${className} default-icon"></i>`;
+ * };
+ * ```
+ *
+ * #### 2. Creating and returning an HTMLElement object
+ * ```typescript
+ * const elementIconRenderer: ActionIconRender = (actionId, className) => {
+ *   const iconEl = document.createElement('span');
+ *   iconEl.className = `${className} material-icons`;
+ *   iconEl.textContent = actionId === 'zoom' ? 'zoom_in' : 'help';
+ *   return iconEl;
+ * };
+ * ```
+ */
+export type ActionIconRender = (
+  actionId: string,
+  className: string,
+) => HTMLElement | string
 
 export type ActionParam = {
   id: string
   label: string
-  tooltip?: string
-  icon?: string | ActionIconRender
+  tooltip?: string | Record<string, string>
+  icon?: string | ActionIconRender | Record<string, string | ActionIconRender>
 }
 
 export type ActionResizeParam = {
@@ -79,9 +111,7 @@ export type ActionNameList =
   | 'camera'
   | 'capture'
   | 'resize'
-  | 'fit-cover'
-  | 'fit-contain'
-  | 'fit-real'
+  | 'fit-action'
   | 'zoom'
 export type ActionDefinition =
   | ActionNameList
@@ -111,19 +141,23 @@ export type PhotoFlexHandlerParam = {
    * ```
    * ex) "your-img.png" => {name: "your-img", ext: ".png"}
    * ```
-   * @returns a new filename
+   * @returns filename to be assigned to the captured image
    */
   name?: (
     image: ImageMetaData,
     /**
      * donwloaded(captured) image size in pixel
      */
-    dim: { width: number; height: number }
+    dim: { width: number; height: number },
   ) => string
   /**
    * called when an action instance is created.
    */
-  action?: (actionId: string, el: HTMLElement, customIcon?: string | ActionIconRender) => void
+  action?: (
+    actionId: string,
+    el: HTMLElement,
+    customIcon?: string | ActionIconRender,
+  ) => void
 }
 /**
  * initial configuration paramters
@@ -193,4 +227,8 @@ export type ImageMetaData = {
    * mime type
    */
   type: string
+}
+export type FittingParam = {
+  scale?: number
+  offset?: { cx: number; cy: number }
 }

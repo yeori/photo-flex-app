@@ -1,4 +1,9 @@
-import { BlobData, type PhotoFlexInitParam } from './types'
+import {
+  BlobData,
+  type PhotoFlexInitParam,
+  ImageMetaData,
+  type FittingParam,
+} from './types'
 import { DndContext } from './dnd/dnd-context'
 import { ImageSource } from './image-source'
 import { type ScaleMode, type Viewport, type Point } from './scale'
@@ -64,14 +69,14 @@ export class PhotoFlex implements Viewport {
     const ctx = (this._photoFlexContext = new PhotoFlexContext(
       this,
       this._operator,
-      this._paramContext
+      this._paramContext,
     ))
     const { prefix, root } = this._paramContext.classnames
     dom.bindDataset(el, `${prefix}-${root}`, '')
 
     this._boardEl = dom.create<HTMLDivElement>(
       `${ctx.resolveDataName('board')}`,
-      el
+      el,
     )
     this._assignDimension(this._boardEl)
 
@@ -84,7 +89,7 @@ export class PhotoFlex implements Viewport {
       Object.freeze({
         name: 'canvas',
         order: 1024,
-      })
+      }),
     )
     this._viewHandle = new ViewHandler(this._photoFlexContext)
     this._viewHandle.installView(this._boardEl, el)
@@ -232,7 +237,7 @@ export class PhotoFlex implements Viewport {
     renderers.forEach((param) => {
       if (param.name === 'grid') {
         this._renderers.push(
-          new GridRenderer(this._photoFlexContext, param as GridRenderParam)
+          new GridRenderer(this._photoFlexContext, param as GridRenderParam),
         )
       } else {
         throw new Error(`invalid renderer. name: ${param.name}`)
@@ -265,7 +270,7 @@ export class PhotoFlex implements Viewport {
       // Check if the dragged items contain files
       if (event.dataTransfer?.types.includes('Files')) {
         const dropEl = dom.createFromHtml(
-          '<div data-photoflex-dropzone>Drop files here</div>'
+          '<div data-photoflex-dropzone>Drop files here</div>',
         )
         dropEl.style.pointerEvents = 'none'
         if (!unsub) {
@@ -389,7 +394,7 @@ export class PhotoFlex implements Viewport {
   }
   public setActiveImage(imageUuid: string) {
     const source = this._sourceManager.getSourceBy(
-      (image) => image.uuid === imageUuid
+      (image) => image.uuid === imageUuid,
     )
     const layer = this._canvasView.getFirstLayer()
     let ratio: number = 1
@@ -415,7 +420,7 @@ export class PhotoFlex implements Viewport {
         source,
         this._canvasView.originReslover,
         { x: 0, y: 0 },
-        ratio
+        ratio,
       )
       this._canvasView.addLayer(layer)
     }
@@ -434,7 +439,7 @@ export class PhotoFlex implements Viewport {
       } catch (error) {
         console.error(
           `PhotoFlex.setImage: Error processing file ${file.name}:`,
-          error
+          error,
         )
       }
     }
@@ -449,25 +454,33 @@ export class PhotoFlex implements Viewport {
     for (const blob of blobs) {
       const source = await ImageSource.fromBlob(
         blob.data,
-        blob.name || randomName()
+        blob.name || randomName(),
       )
       sources.push(source)
     }
     await this._openImageSource(sources)
   }
-  async setImage(files: File[], clear: boolean = true): Promise<void> {
+  async setImage(
+    files: File[],
+    clear: boolean = true,
+  ): Promise<ImageMetaData[]> {
     if (!files || files.length === 0) {
       console.warn('PhotoFlex.setImage: No files provided.')
-      return
+      throw new Error('PhotoFlex.setImage: No files provided.')
     }
 
     const sources: ImageSource[] = await this._fileToImage(files)
+    if (sources.length === 0) {
+      console.warn('PhotoFlex.setImage: No valid image files provided.')
+      throw new Error('PhotoFlex.setImage: No valid image files provided.')
+    }
     await this._openImageSource(sources, clear)
+    return sources
   }
   private async _openImageSource(
     sources: ImageSource[],
     clear: boolean = true,
-    files?: File[]
+    files?: File[],
   ) {
     if (sources.length === 0) {
       console.warn('PhotoFlex.setImage: No valid image files provided.')
@@ -485,7 +498,7 @@ export class PhotoFlex implements Viewport {
 
     const source = sources[0]
     const { center: origin, scale: ratio } = this._sourceManager.read(
-      source.uuid
+      source.uuid,
     )!
     this._sourceManager.setActiveSource(source)
 
@@ -497,7 +510,7 @@ export class PhotoFlex implements Viewport {
         source,
         this._canvasView.originReslover,
         origin,
-        ratio
+        ratio,
       )
       this._canvasView.addLayer(layer)
     }
@@ -513,7 +526,7 @@ export class PhotoFlex implements Viewport {
   }
   removeImageByUuid(uuid: string, activeImageUuid?: string): boolean {
     const imageToDel = this._sourceManager.getSourceBy(
-      (image) => image.uuid === uuid
+      (image) => image.uuid === uuid,
     )
     this._sourceManager.removeSource(imageToDel.uuid)
     if (activeImageUuid) {
@@ -533,7 +546,7 @@ export class PhotoFlex implements Viewport {
     return firstLayer ? firstLayer.ratio : -1
   }
   private _updateZoom(
-    scaleResolver: (layer: ImageLayer) => { ratio: number; origin?: Point }
+    scaleResolver: (layer: ImageLayer) => { ratio: number; origin?: Point },
   ) {
     const layer = this._canvasView.getFirstLayer()
     if (!layer) {
@@ -579,6 +592,21 @@ export class PhotoFlex implements Viewport {
       origin: center,
     }))
   }
+  fitByCustom(option: FittingParam): void {
+    if (option.scale === undefined && option.offset === undefined) {
+      throw new Error('scale or offset must be defined in FittingParam')
+    }
+
+    this._updateZoom((layer) => {
+      const ratio = option.scale !== undefined ? option.scale : layer.ratio
+      const origin =
+        option.offset !== undefined
+          ? { x: option.offset.cx, y: option.offset.cy }
+          : undefined
+
+      return { ratio, origin }
+    })
+  }
   fitToRealSize(): void {
     const realSize = { ratio: 1, origin: { x: 0, y: 0 } }
     this._updateZoom(() => realSize)
@@ -613,7 +641,7 @@ export class PhotoFlex implements Viewport {
     const length = dom.image.inferSize(imageURL)
     const fileName = this._paramContext.resolveFileName(
       image,
-      this._canvasView.viewportSize
+      this._canvasView.viewportSize,
     )
     const dimension = this._canvasView.viewportSize
     this._tooltip.setText(`Captured. ${fileName}`)
@@ -627,6 +655,10 @@ export class PhotoFlex implements Viewport {
   async sendCapture() {
     const e = await this._capture('dataurl')
     this._eventBus.emit('capture', e)
+  }
+  showTooltip(text: string, duration: number = 2000): void {
+    this._tooltip.setText(text)
+    this._tooltip.show(duration)
   }
   async captureBy(type: 'dataurl'): Promise<CaptureEvent> {
     if (type === 'dataurl') {

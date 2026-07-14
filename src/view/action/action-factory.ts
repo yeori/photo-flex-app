@@ -6,7 +6,7 @@ import {
 import { type PhotoFlexContext } from '../../photo-flex-context'
 import { type ActionDefinition } from '../../types'
 import { dom } from '../../util'
-import { ActionFitCover } from './action-fit-scale'
+import { ActionFit } from './action-fit-scale'
 import { ZoomAction } from './action-zoom'
 import { OpenAction } from './action-open'
 import { CaptureAction } from './action-capture'
@@ -29,9 +29,7 @@ export class ActionFactory {
     this._constructors.set('resize', ResizeAction)
     this._constructors.set('capture', CaptureAction)
     this._constructors.set('camera', OpenAction)
-    this._constructors.set('fit-contain', ActionFitCover)
-    this._constructors.set('fit-cover', ActionFitCover)
-    this._constructors.set('fit-real', ActionFitCover)
+    this._constructors.set('fit-action', ActionFit)
     this._constructors.set('zoom', ZoomAction)
   }
   installActions(params: ActionDefinition[]) {

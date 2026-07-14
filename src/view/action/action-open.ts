@@ -21,12 +21,12 @@ export class OpenAction extends AbstractAction {
     const id = `photoflex-f-input-${this.type}`
     const capture = this.type === 'file' ? '' : 'environment'
     const btn = dom.createFromHtml<HTMLButtonElement>(
-      `<button class="blue" data-photoflex-action aria-label="${label}"></button>`
+      `<button class="blue" data-photoflex-action aria-label="${label}"></button>`,
     )
     const fileInput = dom.createFromHtml<HTMLInputElement>(
       `<input type="file" id="${id}" accept="image/*" ${
         capture ? `capture="${capture}"` : ''
-      } style="display: none;" title="${label}"></input>`
+      } style="display: none;" title="${label}"></input>`,
     )
     fileInput.addEventListener('change', this.handleFileSelect)
     this.fileInput = fileInput
@@ -56,15 +56,16 @@ export class OpenAction extends AbstractAction {
     const input = event.target as HTMLInputElement
     if (input.files && input.files.length > 0) {
       const files = Array.from(input.files)
-      console.log(`Files selected: ${files.length} files selected`)
+      // console.log(`Files selected: ${files.length} files selected`)
 
       const imageFiles = files.filter((file) => file.type.startsWith('image/'))
 
       if (imageFiles.length > 0) {
         this.context.op
           .openImage(imageFiles)
-          .then(() => {
-            console.log('Image(s) opened successfully via operator.')
+          .then((images) => {
+            const text = `Image ${images[0].name} opened`
+            this.context.op.showTooltip(text)
           })
           .catch((error) => {
             console.error('Error opening image(s):', error)

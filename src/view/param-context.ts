@@ -28,20 +28,10 @@ const DefaultActionParams: Record<string, ActionParam> = {
       { width: 640, height: 640 },
     ],
   } as ActionResizeParam,
-  'fit-cover': {
-    id: 'fit-cover',
-    label: 'Cover',
-    tooltip: 'Cover viewport',
-  },
-  'fit-contain': {
-    id: 'fit-contain',
+  'fit-action': {
+    id: 'fit-action',
     label: 'Fit Contain',
-    tooltip: 'Fit within viewport',
-  },
-  'fit-real': {
-    id: 'fit-real',
-    label: 'Actual Size',
-    tooltip: '100% size',
+    tooltip: 'Switch to Fit Cover',
   },
   zoom: { id: 'zoom', label: 'Zoom', tooltip: 'Adjust zoom level' },
   capture: {
@@ -54,9 +44,7 @@ const iconMap: Record<ActionNameList, string> = {
   file: 'folder_open',
   camera: 'photo_camera',
   resize: 'aspect_ratio',
-  'fit-cover': 'fullscreen',
-  'fit-contain': 'fit_screen',
-  'fit-real': 'view_real_size',
+  'fit-action': 'fit_screen',
   zoom: '',
   capture: 'capture',
 }
@@ -115,9 +103,7 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
     DefaultActionParams.file,
     DefaultActionParams.camera,
     DefaultActionParams.resize,
-    DefaultActionParams['fit-cover'],
-    DefaultActionParams['fit-contain'],
-    DefaultActionParams['fit-real'],
+    DefaultActionParams['fit-action'],
     DefaultActionParams.zoom,
     DefaultActionParams.capture,
   ],
@@ -273,7 +259,10 @@ export class ParameterContext {
     return nameHandler(image, viewport)
   }
   bindTooltip(el: HTMLElement, param: ActionParam) {
-    el.dataset.photoflexTooltip = param.tooltip || param.label
+    const tooltip = (param.tooltip && typeof param.tooltip === 'object')
+      ? (param.tooltip.contain || param.label)
+      : (param.tooltip || param.label)
+    el.dataset.photoflexTooltip = tooltip
   }
   decorateAction<K extends HTMLElement>(type: string, labelEl: K, customIcon?: string | ActionIconRender) {
     this._param.handler!.action!(type, labelEl, customIcon)

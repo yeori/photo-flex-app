@@ -26,7 +26,10 @@ export abstract class AbstractAction implements IAction {
     if (!el.ariaLabel) {
       el.ariaLabel = this.label
     }
-    this._ctx.decorateAction(this.id, el, this.param.icon)
+    const initialIcon = (this.param.icon && typeof this.param.icon === 'object' && typeof this.param.icon !== 'function')
+      ? (this.param.icon as any).contain
+      : this.param.icon
+    this._ctx.decorateAction(this.id, el, initialIcon)
     this._ctx.paramContext.bindTooltip(el, this.param)
     el.addEventListener('click', () => {
       this.run()

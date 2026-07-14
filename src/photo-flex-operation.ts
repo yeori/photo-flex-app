@@ -1,5 +1,5 @@
 import { PhotoFlexEventMap, type EventBus } from './event/event-bus'
-import { BlobData, PhotoFlex, PhotoFlexEvent, Viewport } from './photo-flex'
+import { BlobData, PhotoFlex, PhotoFlexEvent, Viewport, FittingParam, ImageMetaData } from './photo-flex'
 import { Unsubscriber } from './event'
 
 export interface IPhotoFlexOp {
@@ -44,7 +44,9 @@ export interface IPhotoFlexOp {
   fitByContain(): void
   /** Sets the zoom level to the photo's original size. */
   fitToRealSize(): void
-  openImage(files: File[]): Promise<void>
+  /** Fits the photo by custom zoom and offset. */
+  fitByCustom(option: FittingParam): void
+  openImage(files: File[]): Promise<ImageMetaData[]>
   openBlobs(blobs: BlobData[]): Promise<void>
   /**
    * Removes an image from the editor.
@@ -65,6 +67,7 @@ export interface IPhotoFlexOp {
    * })
    */
   sendCapture(): void
+  showTooltip(text: string, duration?: number): void
   /**
    * registers event listener
    */
@@ -127,7 +130,10 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   fitToRealSize(): void {
     this.target.fitToRealSize()
   }
-  openImage(files: File[]): Promise<void> {
+  fitByCustom(option: FittingParam): void {
+    this.target.fitByCustom(option)
+  }
+  openImage(files: File[]): Promise<ImageMetaData[]> {
     return this.target.setImage(files)
   }
   openBlobs(blobs: BlobData[]): Promise<void> {
@@ -151,6 +157,9 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   }
   sendCapture(): void {
     this.target.sendCapture()
+  }
+  showTooltip(text: string, duration: number = 2000): void {
+    this.target.showTooltip(text, duration)
   }
   subscribe<K extends PhotoFlexEvent>(
     event: K,
