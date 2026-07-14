@@ -16,45 +16,41 @@ export class OpenAction extends AbstractAction {
   get type() {
     return this.param.id
   }
-  protected createElement<K extends HTMLElement>(): K {
+  protected createElement(): HTMLButtonElement {
     const label = this.param.label
     const id = `photoflex-f-input-${this.type}`
-    // const icon = this.type === 'file' ? 'folder_open' : 'photo_camera'
     const capture = this.type === 'file' ? '' : 'environment'
-    const labelEl =
-      dom.createFromHtml<K>(`<label class="blue" tabindex=0 data-photoflex-action for="${id}" aria-label="${label}">
-  <input type="file" id="${id}" accept="image/*" ${
-        capture && `capture="${capture}"`
-      } data-photoflex-action title="${label}"></input></label>
-    `)
-    labelEl.role = 'button'
-    const fileInput = dom.findOne<HTMLInputElement>(labelEl, 'input')
-    fileInput.accept = 'image/*'
-    fileInput.hidden = true
-    fileInput.style.display = 'none'
-    fileInput.addEventListener('change', (e) => {
-      console.log('File input changed', e.target)
-      this.handleFileSelect(e)
-    })
-    labelEl.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        fileInput.click()
-      }
-    })
+    const btn = dom.createFromHtml<HTMLButtonElement>(
+      `<button class="blue" data-photoflex-action aria-label="${label}"></button>`
+    )
+    const fileInput = dom.createFromHtml<HTMLInputElement>(
+      `<input type="file" id="${id}" accept="image/*" ${
+        capture ? `capture="${capture}"` : ''
+      } style="display: none;" title="${label}"></input>`
+    )
+    fileInput.addEventListener('change', this.handleFileSelect)
     this.fileInput = fileInput
 
     this.context.subscribe('open', () => {
       fileInput.value = ''
     })
 
-    return labelEl
+    return btn
   }
-  run(): void {}
+  override bindTo(parent: HTMLElement): void {
+    super.bindTo(parent)
+    if (this.fileInput) {
+      parent.appendChild(this.fileInput)
+    }
+  }
+  run(): void {
+    this.fileInput?.click()
+  }
 
   /**
    * Handles the 'change' event from the hidden file input.
    */
-  private handleFileSelect(event: Event): void {
+  private handleFileSelect = (event: Event): void => {
     event.stopPropagation()
     event.stopImmediatePropagation()
     const input = event.target as HTMLInputElement
