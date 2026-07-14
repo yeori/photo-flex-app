@@ -23,16 +23,16 @@
   "files": [
     "dist"
   ],
-  "module": "./dist/photo-flex.js",
+  "module": "./dist/photoflex.js",
   "exports": {
     ".": {
-      "types": "./dist/photo-flex.d.ts",
-      "import": "./dist/photo-flex.js"
+      "types": "./dist/photoflex.d.ts",
+      "import": "./dist/photoflex.js"
     },
     "./photoflex-modal-ui.css": "./dist/modal-ui.css",
-    "./photoflex.css": "./dist/photo-flex.css"
+    "./photoflex.css": "./dist/photoflex.css"
   },
-  "types": "./dist/photo-flex.d.ts",
+  "types": "./dist/photoflex.d.ts",
   "scripts": {
     "dev": "vite",
     "test": "vitest",

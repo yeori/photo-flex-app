@@ -16,7 +16,7 @@ export default defineConfig({
     lib: {
       entry: 'src/index.ts',
       name: 'PhotoFlex',
-      fileName: 'photo-flex',
+      fileName: 'photoflex',
     },
   },
 })

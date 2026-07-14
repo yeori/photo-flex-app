@@ -50,6 +50,7 @@ export type ActionResizeParam = {
   label: string
   options: { width: number; height: number }[]
   tooltip?: string // Add optional tooltip property
+  useDefaultUI?: boolean
 }
 
 export type ActionZoomParam = {

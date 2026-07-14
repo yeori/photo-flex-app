@@ -8,9 +8,11 @@ import { dom } from '../../util'
  */
 export class ResizeAction extends AbstractAction {
   options: { width: number; height: number }[]
+  useDefaultUI: boolean
   constructor(_ctx: PhotoFlexContext, param: ActionResizeParam) {
     super(_ctx, param)
     this.options = param.options!
+    this.useDefaultUI = param.useDefaultUI !== false
   }
   protected createElement(): HTMLButtonElement {
     const btn = dom.createFromHtml<HTMLButtonElement>(
@@ -23,6 +25,9 @@ export class ResizeAction extends AbstractAction {
   }
 
   run(): void {
-    this.context.op.showModal(new DimensionSelector(this.context, this.options))
+    if (this.useDefaultUI) {
+      this.context.op.showModal(new DimensionSelector(this.context, this.options))
+    }
+    this.context.eventBus.emit('action:resize', { options: this.options })
   }
 }

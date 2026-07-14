@@ -120,5 +120,6 @@ export type PhotoFlexEvent =
   | 'viewport:resize'
   | 'capture'
   | 'source'
+  | 'action:resize'
 export type Unsubscriber = () => void
 export { EventBus } from './event-bus'

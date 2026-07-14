@@ -17,6 +17,7 @@ export type PhotoFlexEventMap = {
   'viewport:resize': ViewportEvent
   capture: CaptureEvent
   source: SourceEvent
+  'action:resize': { options: { width: number; height: number }[] }
 }
 
 export class EventBus {
