@@ -1,4 +1,4 @@
-import type { DataNameParam, PhotoFlexInitParam } from './types'
+import type { DataNameParam, PhotoFlexInitParam, ActionIconRender } from './types'
 import type { EventBus, PhotoFlexEvent, Unsubscriber } from './event'
 import type { IPhotoFlexOp } from './photo-flex-operation'
 import type { Viewport } from './scale'
@@ -30,8 +30,8 @@ export class PhotoFlexContext {
   get paramContext(): ParameterContext {
     return this._paramContext
   }
-  decorateAction<K extends HTMLElement>(type: string, labelEl: K) {
-    this._paramContext.decorateAction(type, labelEl)
+  decorateAction<K extends HTMLElement>(type: string, labelEl: K, customIcon?: string | ActionIconRender) {
+    this._paramContext.decorateAction(type, labelEl, customIcon)
   }
   getFlex() {
     return this._flex

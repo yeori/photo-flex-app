@@ -89,8 +89,15 @@
     outline: 2px solid #777;
   }
   .material-icons,
-  .material-symbols-outlined {
+  .material-symbols-outlined,
+  .photoflex-icon {
     font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: inline-block;
   }
 }
 [data-photoflex-action] {

@@ -39,10 +39,13 @@ export interface IAction {
  * css selector syntax to
  */
 export type CssSelector = string
+export type ActionIconRender = (actionId: string, className: string) => HTMLElement | string
+
 export type ActionParam = {
   id: string
   label: string
   tooltip?: string
+  icon?: string | ActionIconRender
 }
 
 export type ActionResizeParam = {
@@ -51,6 +54,7 @@ export type ActionResizeParam = {
   options: { width: number; height: number }[]
   tooltip?: string // Add optional tooltip property
   useDefaultUI?: boolean
+  icon?: string | ActionIconRender
 }
 
 export type ActionZoomParam = {
@@ -63,6 +67,7 @@ export type ActionZoomParam = {
     value: number
   }[]
   tooltip?: string // Add optional tooltip property
+  icon?: string | ActionIconRender
 }
 export type ActionConstructor = new (
   ctx: PhotoFlexContext,
@@ -118,7 +123,7 @@ export type PhotoFlexHandlerParam = {
   /**
    * called when an action instance is created.
    */
-  action?: (actionId: string, el: HTMLElement) => void
+  action?: (actionId: string, el: HTMLElement, customIcon?: string | ActionIconRender) => void
 }
 /**
  * initial configuration paramters

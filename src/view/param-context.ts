@@ -8,6 +8,7 @@ import {
   ActionResizeParam,
   ActionZoomParam,
   PhotoFlexInitParam,
+  ActionIconRender,
 } from '../types'
 import { dom } from '../util'
 
@@ -64,11 +65,43 @@ const iconMap: Record<ActionNameList, string> = {
  * @param actionId
  * @param el
  */
-const decorateAction = (actionId: string, el: HTMLElement) => {
-  const icon = iconMap[actionId as ActionNameList]
+const decorateAction = (actionId: string, el: HTMLElement, customIcon?: string | ActionIconRender) => {
+  const icon = customIcon !== undefined ? customIcon : iconMap[actionId as ActionNameList]
   if (icon) {
+    if (typeof icon === 'function') {
+      const rendered = icon(actionId, 'photoflex-icon')
+      if (rendered instanceof HTMLElement) {
+        el.appendChild(rendered)
+      } else {
+        const trimmed = rendered.trim()
+        if (trimmed.startsWith('<')) {
+          dom.createFromHtml(trimmed, el)
+        } else {
+          renderStringIcon(actionId, el, trimmed)
+        }
+      }
+    } else {
+      renderStringIcon(actionId, el, icon)
+    }
+  }
+}
+
+const renderStringIcon = (actionId: string, el: HTMLElement, pathOrSymbol: string) => {
+  let trimmed = pathOrSymbol.trim()
+  if (trimmed.startsWith('url(') && trimmed.endsWith(')')) {
+    const inner = trimmed.slice(4, -1).trim()
+    if ((inner.startsWith('"') && inner.endsWith('"')) || (inner.startsWith("'") && inner.endsWith("'"))) {
+      trimmed = inner.slice(1, -1).trim()
+    } else {
+      trimmed = inner
+    }
+  }
+
+  if (trimmed.includes('/') || trimmed.includes('.') || trimmed.startsWith('data:')) {
+    dom.createFromHtml(`<img class="photoflex-icon" src="${trimmed}" alt="${actionId}" />`, el)
+  } else {
     dom.createFromHtml(
-      `<span class="material-symbols-outlined">${icon}</span>`,
+      `<span class="material-symbols-outlined">${trimmed}</span>`,
       el
     )
   }
@@ -242,7 +275,7 @@ export class ParameterContext {
   bindTooltip(el: HTMLElement, param: ActionParam) {
     el.dataset.photoflexTooltip = param.tooltip || param.label
   }
-  decorateAction<K extends HTMLElement>(type: string, labelEl: K) {
-    this._param.handler!.action!(type, labelEl)
+  decorateAction<K extends HTMLElement>(type: string, labelEl: K, customIcon?: string | ActionIconRender) {
+    this._param.handler!.action!(type, labelEl, customIcon)
   }
 }
