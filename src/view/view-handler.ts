@@ -3,6 +3,7 @@ import { type PhotoFlexContext } from '../photo-flex-context'
 import { AfterImageView } from './after-image-view'
 import { ImageSourceView } from './image-source-view'
 import { TooltipView } from './tooltip/tooltip-view'
+import { CaptureEffectView } from './capture-effect-view'
 
 export class ViewHandler {
   private readonly _views: IView[] = []
@@ -21,6 +22,10 @@ export class ViewHandler {
           case 'image-source-view':
             view = new ImageSourceView(this._ctx)
             view.bindTo(rootEl)
+            break
+          case 'capture-effect-view':
+            view = new CaptureEffectView(this._ctx)
+            view.bindTo(boardEl)
             break
           default:
             throw new Error(

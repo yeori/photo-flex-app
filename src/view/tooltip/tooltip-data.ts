@@ -41,11 +41,17 @@ export class TooltipData {
     }, millis)
   }
   /**
-   * Starts the timer to show the tooltip. If durationMillis is given, tooltip is removed after that time.
+   * Starts the timer to show the tooltip with the specified text.
+   * If durationMillis is not specified, it defaults to 2000.
+   * Pass 0 to prevent the tooltip from auto-hiding.
    */
-  show(durationMillis?: number): void {
-    if (durationMillis) {
-      this.hideAfter(durationMillis)
+  show(text: string, durationMillis?: number): void {
+    this.setText(text)
+
+    const duration = durationMillis !== undefined ? durationMillis : 2000
+
+    if (duration > 0) {
+      this.hideAfter(duration)
     }
     if (this._showTimer) {
       return
@@ -56,8 +62,8 @@ export class TooltipData {
       this.boxEl.appendChild(this.tooltipElement)
       this.setPosition()
       this.tooltipElement.style.opacity = '1'
-      if (durationMillis) {
-        this.hideAfter(durationMillis)
+      if (duration > 0) {
+        this.hideAfter(duration)
       }
     }, this.showDelay)
   }

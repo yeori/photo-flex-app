@@ -8,6 +8,7 @@ import {
   ViewportEvent,
   CaptureEvent,
   SourceEvent,
+  ActionEvent,
 } from '.'
 
 export type PhotoFlexEventMap = {
@@ -17,7 +18,7 @@ export type PhotoFlexEventMap = {
   'viewport:resize': ViewportEvent
   capture: CaptureEvent
   source: SourceEvent
-  'action:resize': { options: { width: number; height: number }[] }
+  action: ActionEvent
 }
 
 export class EventBus {

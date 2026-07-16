@@ -1,7 +1,7 @@
 import {
   type ActionConstructor,
   type ActionNameList,
-  type IAction,
+  type IAction
 } from '../../types'
 import { type PhotoFlexContext } from '../../photo-flex-context'
 import { type ActionDefinition } from '../../types'
@@ -16,7 +16,10 @@ export class ActionFactory {
   private _el: HTMLElement
   private _constructors: Map<ActionNameList, ActionConstructor> = new Map()
   private _actions: IAction[] = []
-  constructor(container: HTMLElement, private readonly _ctx: PhotoFlexContext) {
+  constructor(
+    container: HTMLElement,
+    private readonly _ctx: PhotoFlexContext
+  ) {
     this._el = dom.create(
       `div${this._ctx.resolveDataName('toolbar')}`,
       container
@@ -28,7 +31,6 @@ export class ActionFactory {
     this._constructors.set('camera', OpenAction)
     this._constructors.set('resize', ResizeAction)
     this._constructors.set('capture', CaptureAction)
-    this._constructors.set('camera', OpenAction)
     this._constructors.set('fit-action', ActionFit)
     this._constructors.set('zoom', ZoomAction)
   }
@@ -46,9 +48,15 @@ export class ActionFactory {
           this.installAction(action)
         } else {
           console.warn(
-            `[PHOTOFLEX-APP] ACTION_ID_NOT_FOUND: no such action(${id})`
+            `[PHOTOFLEX-APP] ACTION_ID_NOT_FOUND: no such action name: ${id}`
           )
         }
+      } else if (
+        typeof param === 'object' &&
+        'bindTo' in param &&
+        typeof (param as any).bindTo === 'function'
+      ) {
+        this.installAction(param as IAction)
       } else if (typeof param === 'function') {
         if ('prototype' in param && typeof param.prototype === 'object') {
           this.installAction(new param(this._ctx))
@@ -60,13 +68,16 @@ export class ActionFactory {
           this.installAction(action)
         } else {
           console.warn(
-            `[PHOTOFLEX-APP] ACTION_ID_NOT_FOUND: no such action(${param.id})`
+            `[PHOTOFLEX-APP] ACTION_ID_NOT_FOUND: no such action name: ${param.id}`
           )
         }
       }
     })
   }
   installAction(action: IAction) {
+    if (action.setContext) {
+      action.setContext(this._ctx)
+    }
     action.bindTo(this._el)
     this._actions.push(action)
   }

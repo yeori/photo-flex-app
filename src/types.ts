@@ -34,6 +34,10 @@ export interface IAction {
    * Optional method to dispose of any resources held by the action.
    */
   dispose?(): void
+  /**
+   * Set context to this action.
+   */
+  setContext?(ctx: PhotoFlexContext): void
 }
 /**
  * css selector syntax to
@@ -47,18 +51,18 @@ export type CssSelector = string
  * @returns The `HTMLElement` to render, or a `string` containing HTML/SVG markup.
  *
  * #### 1. SVG
+ *
  * ```typescript
  * const svgIconRenderer: ActionIconRender = (actionId, className) => {
  *   if (actionId === 'zoom') {
- *     return `<svg class="${className}" viewBox="0 0 24 24">
- *       <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5..."/>
- *     </svg>`;
+ *     return `<svg class="${className}" viewBox="0 0 24 24"><path d="..."/></svg>`;
  *   }
  *   return `<i class="${className} default-icon"></i>`;
  * };
  * ```
  *
- * #### 2. Creating and returning an HTMLElement object
+ * #### 2. HTMLElement object
+ *
  * ```typescript
  * const elementIconRenderer: ActionIconRender = (actionId, className) => {
  *   const iconEl = document.createElement('span');
@@ -70,11 +74,11 @@ export type CssSelector = string
  */
 export type ActionIconRender = (
   actionId: string,
-  className: string,
+  className: string
 ) => HTMLElement | string
 
 export type ActionParam = {
-  id: string
+  id: ActionNameList | string
   label: string
   tooltip?: string | Record<string, string>
   icon?: string | ActionIconRender | Record<string, string | ActionIconRender>
@@ -113,12 +117,15 @@ export type ActionNameList =
   | 'resize'
   | 'fit-action'
   | 'zoom'
+  | 'move'
+  | 'open-image-source'
 export type ActionDefinition =
   | ActionNameList
   | ActionResizeParam
   | ActionZoomParam
   | ActionParam
   | ActionConstructor
+  | IAction
 /**
  * datanames for ui elements.
  *
@@ -148,7 +155,7 @@ export type PhotoFlexHandlerParam = {
     /**
      * donwloaded(captured) image size in pixel
      */
-    dim: { width: number; height: number },
+    dim: { width: number; height: number }
   ) => string
   /**
    * called when an action instance is created.
@@ -156,7 +163,7 @@ export type PhotoFlexHandlerParam = {
   action?: (
     actionId: string,
     el: HTMLElement,
-    customIcon?: string | ActionIconRender,
+    customIcon?: string | ActionIconRender
   ) => void
 }
 /**

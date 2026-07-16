@@ -26,8 +26,14 @@ export class ResizeAction extends AbstractAction {
 
   run(): void {
     if (this.useDefaultUI) {
-      this.context.op.showModal(new DimensionSelector(this.context, this.options))
+      this.context.op.showModal(
+        new DimensionSelector(this.context, this.options)
+      )
+    } else {
+      this.context.eventBus.emit('action', {
+        target: 'resize',
+        payload: { options: this.options }
+      })
     }
-    this.context.eventBus.emit('action:resize', { options: this.options })
   }
 }

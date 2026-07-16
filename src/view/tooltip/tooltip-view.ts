@@ -144,7 +144,7 @@ export class TooltipView implements IView {
 
     this._activeTooltip = tooltip
 
-    tooltip.show()
+    tooltip.show(text, 0)
     return tooltip
   }
 

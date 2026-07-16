@@ -8,7 +8,7 @@ import {
   ActionResizeParam,
   ActionZoomParam,
   PhotoFlexInitParam,
-  ActionIconRender,
+  ActionIconRender
 } from '../types'
 import { dom } from '../util'
 
@@ -17,7 +17,7 @@ const DefaultActionParams: Record<string, ActionParam> = {
   camera: {
     id: 'camera',
     label: 'Camera',
-    tooltip: 'Take a photo',
+    tooltip: 'Take a photo'
   },
   resize: {
     id: 'resize',
@@ -25,20 +25,20 @@ const DefaultActionParams: Record<string, ActionParam> = {
     options: [
       { width: 320, height: 320 },
       { width: 480, height: 480 },
-      { width: 640, height: 640 },
-    ],
+      { width: 640, height: 640 }
+    ]
   } as ActionResizeParam,
   'fit-action': {
     id: 'fit-action',
     label: 'Fit Contain',
-    tooltip: 'Switch to Fit Cover',
+    tooltip: 'Switch to Fit Cover'
   },
   zoom: { id: 'zoom', label: 'Zoom', tooltip: 'Adjust zoom level' },
   capture: {
     id: 'capture',
     label: 'Capture',
-    tooltip: 'Capture Viewport',
-  },
+    tooltip: 'Capture Viewport'
+  }
 }
 const iconMap: Record<ActionNameList, string> = {
   file: 'folder_open',
@@ -47,14 +47,21 @@ const iconMap: Record<ActionNameList, string> = {
   'fit-action': 'fit_screen',
   zoom: '',
   capture: 'capture',
+  move: '',
+  'open-image-source': ''
 }
 /**
  * default action decorator.
  * @param actionId
  * @param el
  */
-const decorateAction = (actionId: string, el: HTMLElement, customIcon?: string | ActionIconRender) => {
-  const icon = customIcon !== undefined ? customIcon : iconMap[actionId as ActionNameList]
+const decorateAction = (
+  actionId: string,
+  el: HTMLElement,
+  customIcon?: string | ActionIconRender
+) => {
+  const icon =
+    customIcon !== undefined ? customIcon : iconMap[actionId as ActionNameList]
   if (icon) {
     if (typeof icon === 'function') {
       const rendered = icon(actionId, 'photoflex-icon')
@@ -74,19 +81,33 @@ const decorateAction = (actionId: string, el: HTMLElement, customIcon?: string |
   }
 }
 
-const renderStringIcon = (actionId: string, el: HTMLElement, pathOrSymbol: string) => {
+const renderStringIcon = (
+  actionId: string,
+  el: HTMLElement,
+  pathOrSymbol: string
+) => {
   let trimmed = pathOrSymbol.trim()
   if (trimmed.startsWith('url(') && trimmed.endsWith(')')) {
     const inner = trimmed.slice(4, -1).trim()
-    if ((inner.startsWith('"') && inner.endsWith('"')) || (inner.startsWith("'") && inner.endsWith("'"))) {
+    if (
+      (inner.startsWith('"') && inner.endsWith('"')) ||
+      (inner.startsWith("'") && inner.endsWith("'"))
+    ) {
       trimmed = inner.slice(1, -1).trim()
     } else {
       trimmed = inner
     }
   }
 
-  if (trimmed.includes('/') || trimmed.includes('.') || trimmed.startsWith('data:')) {
-    dom.createFromHtml(`<img class="photoflex-icon" src="${trimmed}" alt="${actionId}" />`, el)
+  if (
+    trimmed.includes('/') ||
+    trimmed.includes('.') ||
+    trimmed.startsWith('data:')
+  ) {
+    dom.createFromHtml(
+      `<img class="photoflex-icon" src="${trimmed}" alt="${actionId}" />`,
+      el
+    )
   } else {
     dom.createFromHtml(
       `<span class="material-symbols-outlined">${trimmed}</span>`,
@@ -105,29 +126,30 @@ const DefaultInit: Required<PhotoFlexInitParam> = {
     DefaultActionParams.resize,
     DefaultActionParams['fit-action'],
     DefaultActionParams.zoom,
-    DefaultActionParams.capture,
+    DefaultActionParams.capture
   ],
   renderers: [],
   views: [
     { name: 'image-source-view', use: true },
     { name: 'after-image-view', use: true },
+    { name: 'capture-effect-view', use: true }
   ],
   classnames: {
     prefix: 'photoflex',
     board: 'board',
     root: 'root',
     canvas: 'canvas',
-    toolbar: 'toolbar',
+    toolbar: 'toolbar'
   },
   handler: { name: (image) => `${image.name}`, action: decorateAction },
-  loadContext: (canvas) => canvas.getContext('2d')!,
+  loadContext: (canvas) => canvas.getContext('2d')!
 }
 
 const DefaultZoomActionOption = {
   min: 0.1,
   max: 2,
   step: 0.1,
-  value: 1,
+  value: 1
 }
 export class ParameterContext {
   private readonly _param: PhotoFlexInitParam
@@ -259,12 +281,17 @@ export class ParameterContext {
     return nameHandler(image, viewport)
   }
   bindTooltip(el: HTMLElement, param: ActionParam) {
-    const tooltip = (param.tooltip && typeof param.tooltip === 'object')
-      ? (param.tooltip.contain || param.label)
-      : (param.tooltip || param.label)
+    const tooltip =
+      param.tooltip && typeof param.tooltip === 'object'
+        ? param.tooltip.contain || param.label
+        : param.tooltip || param.label
     el.dataset.photoflexTooltip = tooltip
   }
-  decorateAction<K extends HTMLElement>(type: string, labelEl: K, customIcon?: string | ActionIconRender) {
+  decorateAction<K extends HTMLElement>(
+    type: string,
+    labelEl: K,
+    customIcon?: string | ActionIconRender
+  ) {
     this._param.handler!.action!(type, labelEl, customIcon)
   }
 }

@@ -2,7 +2,7 @@ import {
   BlobData,
   type PhotoFlexInitParam,
   ImageMetaData,
-  type FittingParam,
+  type FittingParam
 } from './types'
 import { DndContext } from './dnd/dnd-context'
 import { ImageSource } from './image-source'
@@ -69,14 +69,14 @@ export class PhotoFlex implements Viewport {
     const ctx = (this._photoFlexContext = new PhotoFlexContext(
       this,
       this._operator,
-      this._paramContext,
+      this._paramContext
     ))
     const { prefix, root } = this._paramContext.classnames
     dom.bindDataset(el, `${prefix}-${root}`, '')
 
     this._boardEl = dom.create<HTMLDivElement>(
       `${ctx.resolveDataName('board')}`,
-      el,
+      el
     )
     this._assignDimension(this._boardEl)
 
@@ -88,8 +88,8 @@ export class PhotoFlex implements Viewport {
       this._photoFlexContext,
       Object.freeze({
         name: 'canvas',
-        order: 1024,
-      }),
+        order: 1024
+      })
     )
     this._viewHandle = new ViewHandler(this._photoFlexContext)
     this._viewHandle.installView(this._boardEl, el)
@@ -97,8 +97,8 @@ export class PhotoFlex implements Viewport {
     this._dnd = new DndContext(this._canvasView.canvas, {
       translate: (_, x, y) => ({
         x: x - this.width / 2,
-        y: y - this.height / 2,
-      }),
+        y: y - this.height / 2
+      })
     })
 
     this.installRenderers()
@@ -114,7 +114,7 @@ export class PhotoFlex implements Viewport {
       .getView<TooltipView>('tooltip-view')
       .createTooltip(this._canvasView.canvas, 'ready', 'center', 0, 400)
     dom.event.bindResizeObserver(this._boardEl, () => {
-      this._tooltip.show()
+      this._tooltip.show('ready', 0)
       setTimeout(() => {
         this._handleResize()
         this._tooltip.setText(`${this.width}x${this.height}`)
@@ -179,11 +179,13 @@ export class PhotoFlex implements Viewport {
         return
       }
       const c = layer.getOffset()
+      const inferredSize = dom.image.inferSize(this._canvasView.capture().imageURL)
       this._eventBus.emit('move', {
         ratio: layer.ratio,
         offset: { cx: c.x, cy: c.y },
         rect: layer.getImageRect(this as Viewport),
         image: layer.image,
+        inferredSize
       })
       this.repaint()
     }
@@ -200,11 +202,11 @@ export class PhotoFlex implements Viewport {
     }
     if (!widthResizable && !heightResizable) {
       dom.style(el, {
-        aspectRatio: `${pixelWidth} / ${pixelHeight}`,
+        aspectRatio: `${pixelWidth} / ${pixelHeight}`
       })
     } else {
       dom.style(el, {
-        aspectRatio: 'auto',
+        aspectRatio: 'auto'
       })
     }
     bindDimension(el, 'width', width)
@@ -217,11 +219,11 @@ export class PhotoFlex implements Viewport {
     if (heightResizable) {
       dom.style(el, {
         height: '100%',
-        maxHeight: `${pixelHeight}${hUnit}`,
+        maxHeight: `${pixelHeight}${hUnit}`
       })
     } else {
       dom.style(el, {
-        height: `${pixelHeight}px`,
+        height: `${pixelHeight}px`
       })
       setTimeout(() => {
         el.style.height = ''
@@ -237,7 +239,7 @@ export class PhotoFlex implements Viewport {
     renderers.forEach((param) => {
       if (param.name === 'grid') {
         this._renderers.push(
-          new GridRenderer(this._photoFlexContext, param as GridRenderParam),
+          new GridRenderer(this._photoFlexContext, param as GridRenderParam)
         )
       } else {
         throw new Error(`invalid renderer. name: ${param.name}`)
@@ -270,7 +272,7 @@ export class PhotoFlex implements Viewport {
       // Check if the dragged items contain files
       if (event.dataTransfer?.types.includes('Files')) {
         const dropEl = dom.createFromHtml(
-          '<div data-photoflex-dropzone>Drop files here</div>',
+          '<div data-photoflex-dropzone>Drop files here</div>'
         )
         dropEl.style.pointerEvents = 'none'
         if (!unsub) {
@@ -349,13 +351,17 @@ export class PhotoFlex implements Viewport {
     return this._canvasView.getLayerOrigins()
   }
 
-  setLayerOffset(layer: ImageLayer, cx: number, cy: number): void {
+  setLayerOffset(layer: ImageLayer, cx: number, cy: number, captureSize?: boolean): void {
     layer.setOffset(cx, cy)
+    const inferredSize = captureSize
+      ? dom.image.inferSize(this._canvasView.capture().imageURL)
+      : undefined
     this._eventBus.emit('move', {
       ratio: layer.ratio,
       offset: { cx, cy },
       rect: layer.getImageRect(this as Viewport),
       image: layer.image,
+      inferredSize
     })
   }
   /**
@@ -373,7 +379,7 @@ export class PhotoFlex implements Viewport {
     this._eventBus.emit('viewport:resize', {
       width,
       height,
-      image,
+      image
     })
   }
 
@@ -394,7 +400,7 @@ export class PhotoFlex implements Viewport {
   }
   public setActiveImage(imageUuid: string) {
     const source = this._sourceManager.getSourceBy(
-      (image) => image.uuid === imageUuid,
+      (image) => image.uuid === imageUuid
     )
     const layer = this._canvasView.getFirstLayer()
     let ratio: number = 1
@@ -404,7 +410,7 @@ export class PhotoFlex implements Viewport {
       this._sourceManager.write({
         imageUuid: image.uuid,
         center,
-        scale: _ratio,
+        scale: _ratio
       })
       layer.replaceImageSource(source)
       const param = this._sourceManager.setActiveSource(source)
@@ -420,14 +426,14 @@ export class PhotoFlex implements Viewport {
         source,
         this._canvasView.originReslover,
         { x: 0, y: 0 },
-        ratio,
+        ratio
       )
       this._canvasView.addLayer(layer)
     }
     this.repaint()
     this._eventBus.emit('source', {
       type: 'activated',
-      images: [source],
+      images: [source]
     })
   }
   private async _fileToImage(files: File[]) {
@@ -439,7 +445,7 @@ export class PhotoFlex implements Viewport {
       } catch (error) {
         console.error(
           `PhotoFlex.setImage: Error processing file ${file.name}:`,
-          error,
+          error
         )
       }
     }
@@ -454,7 +460,7 @@ export class PhotoFlex implements Viewport {
     for (const blob of blobs) {
       const source = await ImageSource.fromBlob(
         blob.data,
-        blob.name || randomName(),
+        blob.name || randomName()
       )
       sources.push(source)
     }
@@ -462,7 +468,7 @@ export class PhotoFlex implements Viewport {
   }
   async setImage(
     files: File[],
-    clear: boolean = true,
+    clear: boolean = true
   ): Promise<ImageMetaData[]> {
     if (!files || files.length === 0) {
       console.warn('PhotoFlex.setImage: No files provided.')
@@ -480,7 +486,7 @@ export class PhotoFlex implements Viewport {
   private async _openImageSource(
     sources: ImageSource[],
     clear: boolean = true,
-    files?: File[],
+    files?: File[]
   ) {
     if (sources.length === 0) {
       console.warn('PhotoFlex.setImage: No valid image files provided.')
@@ -492,13 +498,13 @@ export class PhotoFlex implements Viewport {
       this._sourceManager.write({
         imageUuid: source.uuid,
         center: { x: 0, y: 0 },
-        scale: this._calculateScale(source),
+        scale: this._calculateScale(source)
       })
     }
 
     const source = sources[0]
     const { center: origin, scale: ratio } = this._sourceManager.read(
-      source.uuid,
+      source.uuid
     )!
     this._sourceManager.setActiveSource(source)
 
@@ -510,23 +516,23 @@ export class PhotoFlex implements Viewport {
         source,
         this._canvasView.originReslover,
         origin,
-        ratio,
+        ratio
       )
       this._canvasView.addLayer(layer)
     }
     this.repaint()
     this._eventBus.emit('source', {
       type: 'activated',
-      images: sources,
+      images: sources
     })
     this._eventBus.emit('open', {
       image: source,
-      ratio,
+      ratio
     })
   }
   removeImageByUuid(uuid: string, activeImageUuid?: string): boolean {
     const imageToDel = this._sourceManager.getSourceBy(
-      (image) => image.uuid === uuid,
+      (image) => image.uuid === uuid
     )
     this._sourceManager.removeSource(imageToDel.uuid)
     if (activeImageUuid) {
@@ -537,7 +543,7 @@ export class PhotoFlex implements Viewport {
     this.repaint()
     this._eventBus.emit('source', {
       type: 'deleted',
-      images: [imageToDel],
+      images: [imageToDel]
     })
     return true
   }
@@ -547,6 +553,7 @@ export class PhotoFlex implements Viewport {
   }
   private _updateZoom(
     scaleResolver: (layer: ImageLayer) => { ratio: number; origin?: Point },
+    captureSize: boolean = true
   ) {
     const layer = this._canvasView.getFirstLayer()
     if (!layer) {
@@ -563,33 +570,36 @@ export class PhotoFlex implements Viewport {
     }
     layer.setScale(newRatio)
     layer.setOffset(origin.x, origin.y)
-    this._tooltip.setText((100 * newRatio).toFixed(1) + '%')
-    this._tooltip.show(500)
+    this._tooltip.show((100 * newRatio).toFixed(1) + '%', 500)
+    const inferredSize = captureSize
+      ? dom.image.inferSize(this._canvasView.capture().imageURL)
+      : undefined
     const evt = {
       ratio: newRatio,
       offset: { cx: origin.x, cy: origin.y },
       rect: layer.getImageRect(this),
       image,
+      inferredSize
     }
     this._eventBus.emit('zoom', evt)
     this.repaint()
     return evt
   }
-  updateZoomBy(zoomDelta: number): void {
+  updateZoomBy(zoomDelta: number, captureSize: boolean = true): void {
     this._updateZoom((layer) => ({
-      ratio: layer.ratio + zoomDelta,
-    }))
+      ratio: layer.ratio + zoomDelta
+    }), captureSize)
   }
-  setZoom(zoom: number): void {
+  setZoom(zoom: number, captureSize: boolean = true): void {
     this._updateZoom(() => ({
-      ratio: zoom,
-    }))
+      ratio: zoom
+    }), captureSize)
   }
   fitBy(scale: 'cover' | 'contain') {
     const center = { x: 0, y: 0 } as Point
     this._updateZoom((layer) => ({
       ratio: this._calculateScale(layer.image, scale),
-      origin: center,
+      origin: center
     }))
   }
   fitByCustom(option: FittingParam): void {
@@ -637,15 +647,14 @@ export class PhotoFlex implements Viewport {
     link.click()
   }
   private async _capture(type: 'dataurl'): Promise<CaptureEvent> {
-    const { imageURL, image } = await this._canvasView.capture()
+    const { imageURL, image } = this._canvasView.capture()
     const length = dom.image.inferSize(imageURL)
     const fileName = this._paramContext.resolveFileName(
       image,
-      this._canvasView.viewportSize,
+      this._canvasView.viewportSize
     )
     const dimension = this._canvasView.viewportSize
-    this._tooltip.setText(`Captured. ${fileName}`)
-    this._tooltip.show(2000)
+    this._tooltip.show(`Captured. ${fileName}`)
     return { image: imageURL, type, name: fileName, length, dimension }
   }
 
@@ -656,9 +665,8 @@ export class PhotoFlex implements Viewport {
     const e = await this._capture('dataurl')
     this._eventBus.emit('capture', e)
   }
-  showTooltip(text: string, duration: number = 2000): void {
-    this._tooltip.setText(text)
-    this._tooltip.show(duration)
+  showTooltip(text: string, duration?: number): void {
+    this._tooltip.show(text, duration)
   }
   async captureBy(type: 'dataurl'): Promise<CaptureEvent> {
     if (type === 'dataurl') {
@@ -688,7 +696,7 @@ export {
   ScaleMode,
   Viewport,
   Point,
-  type PhotoFlexContext,
+  type PhotoFlexContext
 }
 export * from './event'
 export * from './view'

@@ -1,15 +1,30 @@
-/**
- * types of view for photo flex.
- * * image-source-view: images you open in photo flex.
- */
-export type ViewName = 'image-source-view' | 'after-image-view' | 'tooltip-view'
+import { type ActionIconRender } from '../types'
+
+export type ViewName =
+  | 'image-source-view'
+  | 'after-image-view'
+  | 'tooltip-view'
+  | 'capture-effect-view'
 export interface IView {
   name: string
   bindTo(container: HTMLElement): void
 }
 export * from './action'
+export * from './capture-effect-view'
 
-export type ViewParam = {
-  name: ViewName
-  use?: boolean
+export type CaptureEffectViewParam = {
+  icon?: string | ActionIconRender
+  label?: string
 }
+
+export type ViewParam =
+  | {
+      name: 'capture-effect-view'
+      use?: boolean
+      payload?: CaptureEffectViewParam
+    }
+  | {
+      name: Exclude<ViewName, 'capture-effect-view'>
+      use?: boolean
+    }
+

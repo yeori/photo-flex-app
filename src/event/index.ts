@@ -28,6 +28,10 @@ export type MoveEvent = {
    * image
    */
   image: ImageSource
+  /**
+   * image size in bytes of the current viewport
+   */
+  inferredSize?: number
 }
 export type ZoomEvent = MoveEvent
 /**
@@ -38,7 +42,7 @@ export type ImageOpenEvent = {
   image: ImageSource
 }
 /**
- * viewport resize event
+ * fired when viewport has been resized
  */
 export type ViewportEvent = {
   /**
@@ -105,12 +109,24 @@ export type SourceEvent = {
   files?: File[]
 }
 /**
+ * fired when an action is executed
+ */
+export type ActionEvent = {
+  target: 'resize'
+  payload: {
+    options: { width: number; height: number }[]
+  }
+}
+/**
  * PhotoFlex event list
  * ```
- * zoom - zool level changed
+ * zoom - zoom level changed
  * move - image moved
  * open - a new image opened
- * viewport:resize - viewport(canvas) is resized
+ * viewport:resize - viewport(canvas) has been resized
+ * capture - viewport content is captured
+ * source - image source is added, deleted, or active source status changed
+ * action - an action is executed(user should handle the action)
  * ```
  */
 export type PhotoFlexEvent =
@@ -120,6 +136,6 @@ export type PhotoFlexEvent =
   | 'viewport:resize'
   | 'capture'
   | 'source'
-  | 'action:resize'
+  | 'action'
 export type Unsubscriber = () => void
 export { EventBus } from './event-bus'

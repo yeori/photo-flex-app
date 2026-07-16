@@ -1,5 +1,12 @@
 import { PhotoFlexEventMap, type EventBus } from './event/event-bus'
-import { BlobData, PhotoFlex, PhotoFlexEvent, Viewport, FittingParam, ImageMetaData } from './photo-flex'
+import {
+  BlobData,
+  PhotoFlex,
+  PhotoFlexEvent,
+  Viewport,
+  FittingParam,
+  ImageMetaData
+} from './photo-flex'
 import { Unsubscriber } from './event'
 
 export interface IPhotoFlexOp {
@@ -22,13 +29,13 @@ export interface IPhotoFlexOp {
    * Updates the zoom level by the specified delta.
    * @param zoomDelta The amount to change the zoom level by.
    */
-  updateZoomBy(zoomDelta: number): void
+  updateZoomBy(zoomDelta: number, captureSize?: boolean): void
   /**
    * Sets the zoom level to the specified value.
    * @param zoomLevel The new zoom level.
    */
-  setZoom(zoomLevel: number): void
-  setOffset(imageUuid: string, x: number, y: number): void
+  setZoom(zoomLevel: number, captureSize?: boolean): void
+  setOffset(imageUuid: string, x: number, y: number, captureSize?: boolean): void
   /**
    * Shows a modal element.
    * @param elem The HTML element to show as a modal.
@@ -99,20 +106,20 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   resizeViewport(width: number, height: number): void {
     this.target.resizeViewport(width, height)
   }
-  setZoom(zoomLevel: number): void {
+  setZoom(zoomLevel: number, captureSize?: boolean): void {
     const { target } = this
-    target.setZoom(zoomLevel)
+    target.setZoom(zoomLevel, captureSize)
     target.repaint()
   }
-  setOffset(imageUuid: string, x: number, y: number): void {
+  setOffset(imageUuid: string, x: number, y: number, captureSize?: boolean): void {
     const { target } = this
     const layer = target.getLayerBy((layer) => layer.image.uuid === imageUuid)
-    target.setLayerOffset(layer, x, y)
+    target.setLayerOffset(layer, x, y, captureSize)
     target.repaint()
   }
-  updateZoomBy(zoomDelta: number): void {
+  updateZoomBy(zoomDelta: number, captureSize?: boolean): void {
     const { target } = this
-    target.updateZoomBy(zoomDelta)
+    target.updateZoomBy(zoomDelta, captureSize)
     target.repaint()
   }
   showModal(elem: HTMLElement): void {
@@ -158,7 +165,7 @@ export class PhotoFlexOp implements IPhotoFlexOp {
   sendCapture(): void {
     this.target.sendCapture()
   }
-  showTooltip(text: string, duration: number = 2000): void {
+  showTooltip(text: string, duration?: number): void {
     this.target.showTooltip(text, duration)
   }
   subscribe<K extends PhotoFlexEvent>(

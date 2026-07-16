@@ -180,7 +180,7 @@ export class CanvasRenderer implements IRenderer {
   /**
    * capture current viewport
    */
-  async capture(): Promise<{ imageURL: string; image: ImageSource }> {
+  capture(): { imageURL: string; image: ImageSource } {
     const buffer = document.createElement('canvas')
     const { width: W, height: H } = this._context.getViewportSize()
     const intrinsicW = W[0]

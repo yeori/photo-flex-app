@@ -22,6 +22,10 @@ export class ImageDragger implements DragListener {
     editor.repaint()
   }
   end(): void {
+    this.editor.getLayers().forEach((layer) => {
+      const offset = layer.getOffset()
+      this.editor.setLayerOffset(layer, offset.x, offset.y, true)
+    })
     this._origins = []
     this.editor.setCursor('grab')
   }

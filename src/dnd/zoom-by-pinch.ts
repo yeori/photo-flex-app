@@ -16,11 +16,12 @@ export class ZoomByPinch implements PinchListener {
   zooming(e: PinchEvent): void {
     this.before() // in case of `drag` => `zoom` by second touch
     const newRatio = this.initialRatio * e.scale
-    this.editor.setZoom(newRatio)
+    this.editor.setZoom(newRatio, false)
     this.editor.repaint()
   }
 
   end(): void {
+    this.editor.setZoom(this.editor.getZoomLevel(), true)
     this.initialRatio = -1
   }
 }
